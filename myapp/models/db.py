@@ -1,5 +1,9 @@
-from sqlalchemy import Column, Integer, String
-from myapp.db.database import Base
+# coding = "utf-8"
+
+"""
+    zuohaoshi db
+    Good man is well
+"""
 
 class User(Base):
     __tablename__ = 'users'
@@ -14,27 +18,6 @@ class User(Base):
     def __repr__(self):
         return '<User %r>' % (self.name)
 
-
-
-
-#!/usr/bin/env python
-import os
-from flask import Flask, abort, request, jsonify, g, url_for
-from flask.ext.sqlalchemy import SQLAlchemy
-from flask.ext.httpauth import HTTPBasicAuth
-from passlib.apps import custom_app_context as pwd_context
-from itsdangerous import (TimedJSONWebSignatureSerializer
-                          as Serializer, BadSignature, SignatureExpired)
-
-# initialization
-app = Flask(__name__)
-app.config['SECRET_KEY'] = 'the quick brown fox jumps over the lazy dog'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
-app.config['SQLALCHEMY_COMMIT_ON_TEARDOWN'] = True
-
-# extensions
-db = SQLAlchemy(app)
-auth = HTTPBasicAuth()
 
 
 class User(db.Model):

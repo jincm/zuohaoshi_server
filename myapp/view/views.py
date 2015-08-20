@@ -1,9 +1,20 @@
 # coding = "utf-8"
 
-from yourapplication import app
+"""
+    zuohaoshi view
+    Good man is well
+"""
 
-@app.route('/')
-def index():
+from flask import Blueprint
+
+user_blueprint = Blueprint('user', __name__)
+activity_blueprint = Blueprint('activity', __name__)
+group_blueprint = Blueprint('group', __name__)
+loster_blueprint = Blueprint('loster', __name__)
+message_blueprint = Blueprint('message', __name__)
+
+@user_blueprint.route('/<user>')
+def show_user(user):
     return 'Hello World!'
 
 

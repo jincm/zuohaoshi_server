@@ -5,13 +5,52 @@
     zuohaoshi application start app
     Good man is well
 """
+import os
+import sys
+import time
+import logging
+from logging.handlers import RotatingFileHandler
+from logging import Formatter
 
 from flask import Flask
-from flask import request,redirect,make_response,url_for
+from flask import request,redirect,make_response,url_for,abort
+
+from myapp.view.views import *
+from myapp.models.db import *
+
+
+def create_app(config="settings.py"):
+    app = Flask(__name__)
+    app.config.from_object(config)
+
+    db.init_app(app)
+
+    #register our blueprints
+    app.register_blueprint(user_blueprint, url_prefix='/users')
+    app.register_blueprint(activity_blueprint, url_prefix='/activity')
+    app.register_blueprint(group_blueprint, url_prefix='/group')
+    app.register_blueprint(loster_blueprint, url_prefix='/loster')
+    app.register_blueprint(message_blueprint, url_prefix='/message')
+
+
+    return app
+
+if __name__ == "__main__":
+    app = create_app("settings.py")
+    #debug
+
+    if not app.debug:
+        file_handler = RotatingFileHandler()
+        file_handler.setLevel(app.config[LOG_LEVEL])
+        file_handler.setFormatter(Formatter('[%(filename)s %(lineno)d]%(asctime)s %(levelname)s: %(message)s'))
+        app.logger.addHandler(file_handler)
+
+    app.run(host='0.0.0.0', debug=True)
+
+
+"""
+
 #from werkzeug import security
-
-app = Flask(__name__)
-
 
 @app.route('/')
 def hello():
@@ -44,10 +83,7 @@ def login():
         keyword = request.args.get("username")
 
     return "200"
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True)
-
+"""
 """
 from flask import make_response
 from flask import request
