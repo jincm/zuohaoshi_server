@@ -1,10 +1,8 @@
-__author__ = 'jincm1'
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-MYSQL_DB = 'sqlite:////tmp/test.db'
+MYSQL_DB = 'sqlite:////tmp/test.db' #mysql+mysqldb://root:123@localhost/ooxx?charset=utf8
 
 engine = create_engine('MYSQL_DB', convert_unicode=True)
 db_session = scoped_session(sessionmaker(autocommit=False,
@@ -17,5 +15,5 @@ def init_db():
     # import all modules here that might define models so that
     # they will be registered properly on the metadata.  Otherwise
     # you will have to import them first before calling init_db()
-    import yourapplication.models
+    import myapp.db.models
     Base.metadata.create_all(bind=engine)
