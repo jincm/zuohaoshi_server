@@ -10,4 +10,4 @@ PASSWORD = 'default'
 REDIS_NAME = 'myredis'
 
 
-
+LOG_FILE = "zuohaoshi.log"

@@ -7,18 +7,39 @@
 
 from flask import Blueprint
 
-user_blueprint = Blueprint('user', __name__)
-activity_blueprint = Blueprint('activity', __name__)
-group_blueprint = Blueprint('group', __name__)
-loster_blueprint = Blueprint('loster', __name__)
-message_blueprint = Blueprint('message', __name__)
+haoshi_v1_blueprint = Blueprint('views', __name__, url_prefix='/v1/')
 
-@user_blueprint.route('/<user>')
+#activity_blueprint = Blueprint('activity', __name__)
+#group_blueprint = Blueprint('group', __name__)
+#loster_blueprint = Blueprint('loster', __name__)
+#message_blueprint = Blueprint('message', __name__)
+
+@haoshi_v1_blueprint.route('/<user>', methods=["GET"])
 def show_user(user):
-    return 'Hello World!'
+    return 'Hello World! %s' % user
 
 
+#register
 
+#mongodb
+
+#login
+
+#logout
+
+#face_match
+
+
+#save file to oss
+
+#save redis
+
+#relationship
+
+#post
+
+
+"""
 @app.route('/api/users', methods=['POST'])
 def new_user():
     username = request.json.get('username')
@@ -59,3 +80,4 @@ if __name__ == '__main__':
     if not os.path.exists('db.sqlite'):
         db.create_all()
     app.run(debug=True)
+"""

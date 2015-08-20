@@ -5,11 +5,8 @@
     Good man is well
 """
 
-class User(Base):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(50), unique=True)
-    email = Column(String(120), unique=True)
+
+class User(object):
 
     def __init__(self, name=None, email=None):
         self.name = name
@@ -17,14 +14,6 @@ class User(Base):
 
     def __repr__(self):
         return '<User %r>' % (self.name)
-
-
-
-class User(db.Model):
-    __tablename__ = 'users'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(32), index=True)
-    password_hash = db.Column(db.String(64))
 
     def hash_password(self, password):
         self.password_hash = pwd_context.encrypt(password)
@@ -61,3 +50,5 @@ def verify_password(username_or_token, password):
     g.user = user
     return True
 
+def init_db(app):
+    pass

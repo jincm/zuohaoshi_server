@@ -15,7 +15,8 @@ from logging import Formatter
 from flask import Flask
 from flask import request,redirect,make_response,url_for,abort
 
-from myapp.view.views import *
+from myapp.view.views import haoshi_v1_blueprint
+from myapp.view.admin import admin_v1_blueprint
 from myapp.models.db import *
 
 
@@ -23,29 +24,28 @@ def create_app(config="settings.py"):
     app = Flask(__name__)
     app.config.from_object(config)
 
-    db.init_app(app)
+    db.init_db(app)
 
     #register our blueprints
-    app.register_blueprint(user_blueprint, url_prefix='/users')
-    app.register_blueprint(activity_blueprint, url_prefix='/activity')
-    app.register_blueprint(group_blueprint, url_prefix='/group')
-    app.register_blueprint(loster_blueprint, url_prefix='/loster')
-    app.register_blueprint(message_blueprint, url_prefix='/message')
-
+    app.register_blueprint(haoshi_v1_blueprint)
+    app.register_blueprint(admin_v1_blueprint)
+    #app.register_blueprint(activity_blueprint, url_prefix='/activity')
+    #app.register_blueprint(group_blueprint, url_prefix='/group')
+    #app.register_blueprint(loster_blueprint, url_prefix='/loster')
+    #app.register_blueprint(message_blueprint, url_prefix='/message')
 
     return app
 
 if __name__ == "__main__":
     app = create_app("settings.py")
     #debug
-
     if not app.debug:
-        file_handler = RotatingFileHandler()
+        file_handler = RotatingFileHandler(app.config['LOG_FILE'])
         file_handler.setLevel(app.config[LOG_LEVEL])
         file_handler.setFormatter(Formatter('[%(filename)s %(lineno)d]%(asctime)s %(levelname)s: %(message)s'))
         app.logger.addHandler(file_handler)
 
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=app.debug)
 
 
 """
