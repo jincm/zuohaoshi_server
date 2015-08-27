@@ -13,7 +13,7 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
-#from myapp.app import app
+from myapp.app import app
 
 client = MongoClient("mongodb://localhost:27017")
 user_db = client.zuohaoshi_db
@@ -59,7 +59,7 @@ class Haoshi_User(object):
         return user
 
     def get_user(self):
-        #app.logger.info("Test for get user\n")
+        app.logger.info("Test for get user\n")
         pass
     def add_user(self):
         pass

@@ -21,7 +21,7 @@ users_blueprint = Blueprint('users', __name__, url_prefix='/v1/users')
 def show_user(user):
     user = Haoshi_User()
     user.get_user()
-    #app.logger.info("Test for show_user")
+    app.logger.info("Test for show_user")
     return 'Hello World! %s' % user
 
 
