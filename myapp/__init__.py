@@ -34,7 +34,9 @@ if not app.debug:
 from myapp.view.users import users_blueprint
 from myapp.view.admin import admin_blueprint
 from myapp.view.activity import activity_blueprint
-from myapp.models.db import *
+from myapp.models.user import *
+from myapp.models.activity import *
+from myapp.models.group import *
 
 #register our blueprints
 app.register_blueprint(users_blueprint)

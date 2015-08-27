@@ -6,7 +6,7 @@
 """
 
 from flask import Blueprint, request, abort
-from myapp.models.user import Haoshi_User
+from myapp.models.user import User
 
 from myapp import app
 
@@ -19,7 +19,7 @@ users_blueprint = Blueprint('users', __name__, url_prefix='/v1/users')
 
 @users_blueprint.route('/<user>', methods=["GET"])
 def show_user(user):
-    user = Haoshi_User()
+    user = User()
     user.get_user()
     app.logger.info("Test for show_user")
     return 'Hello World! %s' % user
@@ -31,7 +31,7 @@ def add_user():
     password = request.json.get('password')
     if username is None or password is None:
         abort(400)
-    user = Haoshi_User(username, password)
+    user = User(username, password)
     user.hash_password(password)
     #user.save()
 
