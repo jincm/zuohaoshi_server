@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-# coding = "utf-8"
-
+# encoding: utf-8
 """
     zuohaoshi application start app
     Good man is well

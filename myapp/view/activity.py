@@ -1,6 +1,4 @@
-
-# coding = "utf-8"
-
+# encoding: utf-8
 """
     zuohaoshi view
     Good man is well

@@ -1,1 +1,2 @@
-#zuohaoshi_server
+sudo pip install passlib
+sudo pip install itsdangerous
