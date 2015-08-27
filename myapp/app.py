@@ -20,11 +20,11 @@ from myapp.view.activity import activity_blueprint
 from myapp.models.db import *
 
 
-def create_app(config="settings.py"):
+def create_app(config="settings"):
     app = Flask(__name__)
     app.config.from_object(config)
 
-    db.init_db(app)
+    init_db(app)
 
     #register our blueprints
     app.register_blueprint(users_blueprint)
@@ -35,18 +35,20 @@ def create_app(config="settings.py"):
     #app.register_blueprint(message_blueprint, url_prefix='/message')
     #debug
     if not app.debug:
-        #To do:rename filename when file size larger 8M
-        file_handler = RotatingFileHandler(app.config['LOG_FILE'])
-        file_handler.setLevel(app.config[LOG_LEVEL])
+        #To do:rename filename when file size larger 10M
+        file_handler = RotatingFileHandler(app.config['LOG_FILE'], 'a', 10*1024*1024, 10)
+        file_handler.setLevel(logging.INFO) #app.config['LOG_LEVEL'])
         file_handler.setFormatter(Formatter('[%(filename)s %(lineno)d]%(asctime)s %(levelname)s: %(message)s'))
         app.logger.addHandler(file_handler)
+        app.logger.setLevel(logging.INFO)
+        
+        app.logger.info("test for app")
 
     return app
 
-if __name__ == "__main__":
-    app = create_app()
-
-    app.run(host=app.config.APP_HOST, port=app.config.APP_PORT, debug=app.debug)
+app = create_app()
+#if __name__ == "__main__":
+#    app.run(host=app.config.APP_HOST, port=app.config.APP_PORT, debug=app.debug)
 
 
 """

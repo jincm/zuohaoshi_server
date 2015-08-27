@@ -6,7 +6,7 @@ from myapp.app import create_app
 from flask.ext.script import Manager, Shell
 
 import unittest
-import coverage
+#import coverage
 
 #from flask.ext.migrate import Migrate, MigrateCommand
 
@@ -25,7 +25,7 @@ def deploy():
 
 
 # migrations
-manager.add_command('db', MigrateCommand)
+# manager.add_command('db', MigrateCommand)
 
 
 @manager.command
