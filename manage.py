@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 import os
-if os.path.exists('.env'):
-  print('Importing environment from .env...')
-  for line in open('.env'):
-    var = line.strip().split('=')
-    if len(var) == 2:
-      os.environ[var[0]] = var[1]
 
-
-from app import create_app
+from myapp.app import create_app
 from flask.ext.script import Manager, Shell
 
-app = create_app(os.getenv('FLASK_CONFIG') or 'default')
+import unittest
+import coverage
+
+#from flask.ext.migrate import Migrate, MigrateCommand
+
+app = create_app()
 manager = Manager(app)
+
+
 def make_shell_context():
   return dict(app=app)
 
@@ -22,28 +22,6 @@ def deploy():
   """Run deployment tasks."""
   pass
 
-if __name__ == '__main__':
-  manager.run()
-
-
-# manage.py
-
-
-import os
-import unittest
-import coverage
-
-from flask.ext.script import Manager
-from flask.ext.migrate import Migrate, MigrateCommand
-
-from project import app, db
-from project.models import User
-
-
-app.config.from_object(os.environ['APP_SETTINGS'])
-
-migrate = Migrate(app, db)
-manager = Manager(app)
 
 # migrations
 manager.add_command('db', MigrateCommand)
@@ -77,25 +55,21 @@ def cov():
     print('HTML version: file://%s/index.html' % covdir)
     cov.erase()
 
-
+'''
 @manager.command
 def create_db():
     """Creates the db tables."""
     db.create_all()
-
-
 @manager.command
 def drop_db():
     """Drops the db tables."""
     db.drop_all()
-
-
 @manager.command
 def create_admin():
     """Creates the admin user."""
     db.session.add(User("ad@min.com", "admin"))
     db.session.commit()
-
+'''
 
 if __name__ == '__main__':
     manager.run()

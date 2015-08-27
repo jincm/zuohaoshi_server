@@ -1,8 +1,14 @@
+APP_HOST = '0.0.0.0'
+APP_PORT = '8000'
 
 DEBUG = True
-SECRET_KEY = 'development key'
+SECRET_KEY = 'Good man is well done'
 
-DATABASE = '/tmp/flaskr.db'
+MONGODB_DATABASE = "mongodb://localhost:27017"
+
+
+#SQLALCHEMY_DATABASE_URI = 'mysql://root@33.33.33.10:3306/overholt'
+CELERY_BROKER_URL = 'redis://33.33.33.10:6379/0'
 
 USERNAME = 'admin'
 PASSWORD = 'default'
