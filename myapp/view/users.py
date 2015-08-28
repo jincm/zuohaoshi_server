@@ -6,7 +6,7 @@
 """
 
 from flask import Blueprint, request, abort
-from myapp.models.db import Haoshi_User
+from myapp.models.user import Haoshi_User
 
 from myapp import app
 

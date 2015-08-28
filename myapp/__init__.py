@@ -15,7 +15,7 @@ from flask import Flask
 from flask import request,redirect,make_response,url_for,abort
 
 app = Flask(__name__)
-app.config.from_object(config="settings")
+app.config.from_object("settings")
 
 #init_db(app)
 

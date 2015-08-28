@@ -10,21 +10,20 @@ from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
-from pymongo import MongoClient
+from myapp.models import client
 from bson.objectid import ObjectId
 
 from myapp import app
 
-client = MongoClient("mongodb://localhost:27017")
-user_db = client.zuohaoshi_db
-activity_db = client.zuohaoshi_db
-group_db = client.zuohaoshi_db
+user_db = client.zuohaoshi
 
-class Haoshi_User(object):
+class User(object):
 
     def __init__(self, user_id=None):
+        app.logger.info("Test for user db")
         self.user_id = user_id
         self.phone = None
+
         self.friends = set()
         self.feeds = set()
         self.followers = set()
@@ -99,7 +98,7 @@ class Haoshi_User(object):
 
 
 
-@auth.verify_password
+
 def verify_password(username_or_token, password):
     # first try to authenticate by token
     user = Haoshi_User.verify_auth_token(username_or_token)
@@ -111,67 +110,8 @@ def verify_password(username_or_token, password):
     g.user = user
     return True
 
-def init_db(app):
-    pass
 
 
-class Activity(object):
-    def __init__(self, object_id=0, operator=''):
-        self.object_id = object_id
-        #self.owner = ''
-        self.operator = operator
-        self.current_time = gettimeofday()
-        self.participant = set()
-        self.type = '' #group/activity/loster
-        pass
-
-    def get_activity(self):
-        pass
-    def post_activity(self):
-        pass
-    def track_activity(self):
-        pass
-    def del_activity(self, user=None):
-        pass
-
-    def post_comment(self, user, content):
-        pass
-    def del_comment(self, user):
-        pass
-
-    def join_group_ask(self):
-        pass
-    def join_activity_ask(self):
-        pass
-    def join_group_confirm(self):
-        pass
-    def join_activity_confirm(self):
-        pass
-
-    def signout_group(self):
-        pass
-    def signout_activity(self):
-        pass
-
-
-    def del_from_group_byower(self):
-        pass
-    def del_from_activity_byower(self):
-        pass
-
-    def edit_group_info(self):
-        pass
-
-    def activity_nearby(self):
-        pass
-
-    def share_one_activity(self):
-        pass
-
-
-class Group(object):
-    def __init__(self):
-        pass
 
 class Loster(object):
     def __init__(self):
