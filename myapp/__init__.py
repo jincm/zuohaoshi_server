@@ -17,7 +17,7 @@ from flask import request,redirect,make_response,url_for,abort
 app = Flask(__name__)
 app.config.from_object(config="settings")
 
-init_db(app)
+#init_db(app)
 
 #debug
 if not app.debug:

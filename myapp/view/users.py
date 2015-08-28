@@ -8,7 +8,7 @@
 from flask import Blueprint, request, abort
 from myapp.models.db import Haoshi_User
 
-from myapp.app import app
+from myapp import app
 
 users_blueprint = Blueprint('users', __name__, url_prefix='/v1/users')
 

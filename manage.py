@@ -2,7 +2,7 @@
 # encoding: utf-8
 import os
 
-from myapp.app import create_app
+from myapp import app
 from flask.ext.script import Manager, Shell
 
 import unittest
@@ -10,7 +10,6 @@ import unittest
 
 #from flask.ext.migrate import Migrate, MigrateCommand
 
-app = create_app()
 manager = Manager(app)
 
 

@@ -13,7 +13,7 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 
-from myapp.app import app
+from myapp import app
 
 client = MongoClient("mongodb://localhost:27017")
 user_db = client.zuohaoshi_db
@@ -112,8 +112,6 @@ def verify_password(username_or_token, password):
     return True
 
 def init_db(app):
-
-
     pass
 
 
