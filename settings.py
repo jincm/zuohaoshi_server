@@ -1,7 +1,10 @@
 APP_HOST = '0.0.0.0'
 APP_PORT = '8000'
 
+#"DEBUG", "INFO","WARNING", "ERROR", "CRITICAL"
 DEBUG = False
+LOG_INFO = True
+
 SECRET_KEY = 'Good man is well done'
 
 MONGODB_DATABASE = "mongodb://localhost:27017"

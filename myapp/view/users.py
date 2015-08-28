@@ -19,10 +19,10 @@ users_blueprint = Blueprint('users', __name__, url_prefix='/v1/users')
 
 @users_blueprint.route('/<user>', methods=["GET"])
 def show_user(user):
-    user = User()
-    user.get_user()
+    user1 = User()
+    user1.get_user()
     app.logger.info("Test for show_user")
-    return 'Hello World! %s' % user
+    return 'Hello World! %s\n' % user
 
 
 @users_blueprint.route('/users', methods=['POST'])

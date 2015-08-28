@@ -19,21 +19,23 @@ app.config.from_object("settings")
 
 #init_db(app)
 
+#To do:rename filename when file size larger 10M
+file_handler = RotatingFileHandler(app.config['LOG_FILE'], 'a', 10*1024*1024, 10)
+file_handler.setFormatter(Formatter('[%(thread)d %(filename)s %(lineno)d]%(asctime)s %(levelname)s: %(message)s'))
+app.logger.addHandler(file_handler)
 #debug
-if not app.debug:
-    #To do:rename filename when file size larger 10M
-    file_handler = RotatingFileHandler(app.config['LOG_FILE'], 'a', 10*1024*1024, 10)
-    file_handler.setLevel(logging.INFO) #app.config['LOG_LEVEL'])
-    file_handler.setFormatter(Formatter('[%(filename)s %(lineno)d]%(asctime)s %(levelname)s: %(message)s'))
-    app.logger.addHandler(file_handler)
+if app.config['LOG_INFO']:
     app.logger.setLevel(logging.INFO)
+else:
+    app.logger.setLevel(logging.WARN)
+app.logger.info("test for app")
 
-    app.logger.info("test for app")
-
-
-from myapp.view.users import users_blueprint
+#import view and models
 from myapp.view.admin import admin_blueprint
+from myapp.view.users import users_blueprint
 from myapp.view.activity import activity_blueprint
+from myapp.view.group import group_blueprint
+
 from myapp.models.user import *
 from myapp.models.activity import *
 from myapp.models.group import *
@@ -42,9 +44,9 @@ from myapp.models.group import *
 app.register_blueprint(users_blueprint)
 app.register_blueprint(admin_blueprint)
 app.register_blueprint(activity_blueprint)
-#app.register_blueprint(group_blueprint, url_prefix='/group')
-#app.register_blueprint(loster_blueprint, url_prefix='/loster')
-#app.register_blueprint(message_blueprint, url_prefix='/message')
+app.register_blueprint(group_blueprint)
+#app.register_blueprint(loster_blueprint)
+#app.register_blueprint(message_blueprint)
 
 #if __name__ == "__main__":
 #    app.run(host=app.config.APP_HOST, port=app.config.APP_PORT, debug=app.debug)
