@@ -72,6 +72,9 @@ def user_logout(user_id):
     return jsonify(ret)
 
 
+########################
+#########user show######
+########################
 @users_blueprint.route('/<user_id>', methods=["GET"])
 @login_required
 def show_user(user_id):
@@ -82,25 +85,26 @@ def show_user(user_id):
 
 
 #admin add user direct
-@users_blueprint.route('/users', methods=['POST'])
-@login_required
-def add_user():
-    username = request.json.get('username')
+@users_blueprint.route('/admin/add_user', methods=['POST'])
+def add_user_byadmin():
+    accout = request.json.get('accout')
     password = request.json.get('password')
-    if username is None or password is None:
+    token = request.args.get('token')
+    if accout is None or password is None or token is None:
         abort(400)
-    user = User(username, password)
-    user.hash_password(password)
+    admin = User.get_user_fromtoken(token)
+    if not admin:
+        abort(401)
+
+    ret = User.add_user(accout, password)
     #user.save()
 
-    return jsonify({'username': user.username}), 201, {'Location': url_for('get_user', id=user.id, _external=True)}
+    return jsonify({'username': accout}), 201, {'Location': url_for('.get_user')}
 
 
 #save file to oss
 #post
-
 #save redis
-
 #relationship
 #face_match
 
