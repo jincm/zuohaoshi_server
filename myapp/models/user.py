@@ -5,6 +5,9 @@
     Good man is well
 """
 import random
+import os
+import sys
+import datetime
 
 from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
@@ -21,7 +24,7 @@ user_db = user_db_client.zuohaoshi
 class User(object):
 
     def __init__(self, user_id=None):
-        app.logger.info("Test for user db")
+        app.logger.info("user instance %s init" % user_id)
         self.user_id = user_id
         self.phone = None
 
@@ -35,34 +38,26 @@ class User(object):
 
     def __repr__(self):
         return '<User %r>' % (self.user_id)
-
-    def hash_password(self, password):
-        self.password_hash = pwd_context.encrypt(password)
-
-    def verify_password(self, password):
-        return pwd_context.verify(password, self.password_hash)
-
-    def generate_auth_token(self, expiration=0):
-        s = Serializer(app.config['SECRET_KEY'], expires_in=expiration)
-        return s.dumps({'id': self.id})
-
-    @staticmethod
-    def verify_auth_token(token):
-        s = Serializer(app.config['SECRET_KEY'])
+    def is_authenticated(self):
+        return True
+    def is_active(self):
+        return True
+    def is_anonymous(self):
+        return False
+    def get_id(self):
+        """
+        Assuming that the user object has an `id` attribute, this will take
+        that and convert it to `unicode`.
+        """
         try:
-            data = s.loads(token)
-        except SignatureExpired:
-            return None    # valid token, but expired
-        except BadSignature:
-            return None    # invalid token
-        user = User.query.get(data['id'])
-        return user
+            return unicode(self.id)
+        except AttributeError:
+            raise NotImplementedError("No `id` attribute - override get_id")
 
-    def get_user(self):
-        app.logger.info("Test for get user\n")
+    def show_user(self):
+        app.logger.info("show user %s" % self.user_id)
         pass
-    def add_user(self):
-        pass
+
     def del_user(self):
         pass
     def edit_user_info(self):
@@ -80,25 +75,84 @@ class User(object):
     def search_one_person(self):
         pass
 
-    def login(self):
-        pass
     def logout(self):
-        pass
+        app.logger.info("Login failed:[%s]" % self.user_id)
+        #clear redis token
 
-    def register_user(self, phonenum=0, identify_code=None, passwd=None):
+    @classmethod
+    def get_user_fromtoken(self, token):
+        app.logger.info("get user from token:%s\n" % token)
+        #get accout from redis according token
+        token = 'caicaiwoshishui'
+        user_id = '123456'
+        user = User(user_id)
+        return user
+
+    @classmethod
+    def login(self, accout=None, passwd=None):
+        #passwd_hash = self.hash_password(passwd)
+        app.logger.info("save to mongodb [%s:%s]" % (accout, passwd_hash))
+        #get passwd_hash from mongodb
+        db_passwd = "passwdisone"
+        ret = pwd_context.verify(passwd, db_passwd)
+        if db_passwd == '':
+            app.logger.info("Login success:[%s]" % accout)
+            return "Login success"
+        else:
+            app.logger.info("Login failed:[%s]" % accout)
+            return "Login failed"
+
+    @classmethod
+    def add_user(self, accout=None, passwd=None):
+        app.logger.info("add user:[%s,%s]" % (accout, passwd))
+        #generate token
+        s = Serializer(app.config['SECRET_KEY'], expires_in=0)
+        token = s.dumps({'id': 0})
+        token = "caicaiwoshishui"
+        #save token to redis
+
+        #save accout/passwd to mongodb
+        passwd_hash = pwd_context.encrypt(passwd)
+        app.logger.info("save to mongodb [%s:%s]" % (accout, passwd_hash))
+
+    @classmethod
+    def register_user(self, accout=None, identify_code=None, passwd=None):
+        #username may be phone_num or email
         if identify_code is None:
             identify_code = random.randint(111111, 999999)
-            #save to redis
-
             #call API send identify_code to phonenum
-            msg = u"[做好事]: %d ,请与10分钟内完成手机号验证操作"
-            #log(phonenum,msg)
+            if len(accout) == 11:#from app/web/weixin
+                msg = u"[做好事]: %d ,请与10分钟内完成手机号验证操作"
+            app.logger.info("Get identify_code:%s for user %s" %(str(identify_code), accout))
+            #set it to redis
+
+            return {'identify_code':identify_code}
         else:
-            #get identify_code from redis check phonenum
-            self.add_user(phonenum,passwd)
+            #get identify_code from redis to check username and its identify code
+            saved_identify_code = '111111'
+            if identify_code == saved_identify_code:
+                app.logger.info("Identify success for accout %s" % accout)
+                ret = self.add_user(accout, passwd)
+                return {"accout": accout}
+            else:
+                app.logger.info("Identify error for user:%s,code:%s" % (accout, identify_code))
+                #return "Error"
+                abort(400)
 
 
 
+
+    @staticmethod
+    def verify_auth_token(token):
+        s = Serializer(app.config['SECRET_KEY'])
+        try:
+            data = s.loads(token)
+        except SignatureExpired:
+            return None    # valid token, but expired
+        except BadSignature:
+            return None    # invalid token
+        user = User.query.get(data['id'])
+        return user
 
 def verify_password(username_or_token, password):
     # first try to authenticate by token
