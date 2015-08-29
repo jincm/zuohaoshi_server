@@ -14,5 +14,7 @@ activity_blueprint = Blueprint('activity', __name__, url_prefix='/v1/activity')
 @activity_blueprint.route("/hello", methods=["GET", "POST"])
 def hello():
     activity = Activity()
+    activity.get_activity()
+
     app.logger.info("Test for activity")
     return "hello activity_blueprint"

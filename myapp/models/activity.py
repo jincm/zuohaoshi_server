@@ -5,11 +5,11 @@
     Good man is well
 """
 
-from myapp.models import client
+from myapp.models import activity_db_client
 
 from myapp import app
 
-activity_db = client.zuohaoshi
+activity_db = activity_db_client.zuohaoshi
 
 
 class Activity(object):
@@ -17,13 +17,14 @@ class Activity(object):
         self.object_id = object_id
         #self.owner = ''
         self.operator = operator
-        self.current_time = gettimeofday()
+        #self.current_time = gettimeofday()
         self.participant = set()
         self.type = '' #group/activity/loster
         app.logger.info("Test for Activity db")
         pass
 
     def get_activity(self):
+        app.logger.info("test for get_activity ")
         pass
     def post_activity(self):
         pass

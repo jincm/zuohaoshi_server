@@ -5,8 +5,8 @@ server {
     location / {
     include      uwsgi_params;
     uwsgi_pass   127.0.0.1:8000;
-    uwsgi_param UWSGI_PYHOME /home/jincm/zuohaoshi/src/;
-    uwsgi_param UWSGI_CHDIR  /home/jincm/zuohaoshi;
-    uwsgi_param UWSGI_SCRIPT test:hello_world;
+    uwsgi_param UWSGI_PYHOME /home/jincm/zuohaoshi/server;
+    uwsgi_param UWSGI_CHDIR  /home/jincm/zuohaoshi/server;
+    uwsgi_param UWSGI_SCRIPT manage:app;
     }
   }

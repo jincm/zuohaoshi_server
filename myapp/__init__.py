@@ -21,7 +21,7 @@ app.config.from_object("settings")
 
 #To do:rename filename when file size larger 10M
 file_handler = RotatingFileHandler(app.config['LOG_FILE'], 'a', 10*1024*1024, 10)
-file_handler.setFormatter(Formatter('[%(thread)d %(filename)s %(lineno)d]%(asctime)s %(levelname)s: %(message)s'))
+file_handler.setFormatter(Formatter('[%(process)d %(filename)s %(lineno)d]%(asctime)s %(levelname)s: %(message)s'))
 app.logger.addHandler(file_handler)
 #debug
 if app.config['LOG_INFO']:
@@ -47,6 +47,8 @@ app.register_blueprint(activity_blueprint)
 app.register_blueprint(group_blueprint)
 #app.register_blueprint(loster_blueprint)
 #app.register_blueprint(message_blueprint)
+
+app.logger.info("end for register_blueprint")
 
 #if __name__ == "__main__":
 #    app.run(host=app.config.APP_HOST, port=app.config.APP_PORT, debug=app.debug)

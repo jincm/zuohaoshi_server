@@ -4,6 +4,7 @@ APP_PORT = '8000'
 #"DEBUG", "INFO","WARNING", "ERROR", "CRITICAL"
 DEBUG = False
 LOG_INFO = True
+LOG_FILE = "/var/log/zuohaoshi/zuohaoshi.log"
 
 SECRET_KEY = 'Good man is well done'
 
@@ -19,4 +20,4 @@ PASSWORD = 'default'
 REDIS_NAME = 'myredis'
 
 
-LOG_FILE = "zuohaoshi.log"
+

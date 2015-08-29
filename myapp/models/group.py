@@ -5,17 +5,18 @@
     Good man is well
 """
 
-from myapp.models import client
+from myapp.models import group_db_client
 
 from myapp import app
 
-group_db = client.zuohaoshi
+group_db = group_db_client.zuohaoshi
 
 class Group(object):
     def __init__(self):
         app.logger.info("Test for Group db")
         pass
     def get_group(self):
+
         pass
     def post_group(self):
         pass

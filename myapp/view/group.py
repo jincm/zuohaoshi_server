@@ -14,5 +14,7 @@ group_blueprint = Blueprint('group', __name__, url_prefix='/v1/group')
 @group_blueprint.route('/<group>', methods=["GET"])
 def show_group(group):
     group1 = Group()
+    group1.get_group()
+
     app.logger.info("Test for show_group")
     return 'Hello World! %s' % group

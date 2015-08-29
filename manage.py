@@ -3,7 +3,7 @@
 import os
 
 from myapp import app
-from flask.ext.script import Manager, Shell
+from flask.ext.script import Manager, Server, Shell
 
 import unittest
 #import coverage
@@ -11,6 +11,8 @@ import unittest
 #from flask.ext.migrate import Migrate, MigrateCommand
 
 manager = Manager(app)
+server = Server(host=app.config['APP_HOST'], port=app.config['APP_PORT'])
+manager.add_command("runserver", server)
 
 
 def make_shell_context():
@@ -20,6 +22,7 @@ manager.add_command("shell", Shell(make_context=make_shell_context))
 @manager.command
 def deploy():
   """Run deployment tasks."""
+  #To do:chmod /var/log/zuohaoshi;chmod 777 /var/run/
   pass
 
 

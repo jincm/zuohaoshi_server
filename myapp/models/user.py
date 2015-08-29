@@ -10,12 +10,13 @@ from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
-from myapp.models import client
+from myapp.models import user_db_client
 from bson.objectid import ObjectId
 
 from myapp import app
 
-user_db = client.zuohaoshi
+user_db = user_db_client.zuohaoshi
+
 
 class User(object):
 
