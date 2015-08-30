@@ -16,6 +16,7 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
 from myapp.models import user_db_client
+from myapp.models import redis_db
 from myapp.ext.short_message import send_message
 
 from myapp import app
@@ -28,7 +29,6 @@ class User(object):
     def __init__(self, user_id=None):
         app.logger.info("user instance %s init" % user_id)
         self.user_id = str(user_id)
-        #self.id = user_id
 
         self.phone = None
         self.friends = set()
@@ -86,6 +86,8 @@ class User(object):
     def logout(self):
         app.logger.info("Login failed:[%s]" % self.user_id)
         #clear redis token
+        redis_db.delete(self.user_id)
+
         return {'logout': self.user_id}
 
     @classmethod
@@ -126,6 +128,7 @@ class User(object):
             s = Serializer(app.config['SECRET_KEY'], expires_in=6000)#3600000=41 day
             token = s.dumps({'object_id': '%s' % object_id, 'password': passwd})
             #save token to redis
+            redis_db.set(str(object_id), token)
 
             app.logger.info("Login success:[%s:%s:%s]" % (accout, object_id, token))
             return {"login": accout, "token": token, "object_id": str(object_id)}
@@ -138,12 +141,14 @@ class User(object):
         s = Serializer(app.config['SECRET_KEY'], expires_in=6000)
         object_id = 'test'
         token = s.dumps({'object_id': '%s' % object_id, 'password': passwd})
-        #save token to redis
 
         #save accout/passwd to mongodb
         passwd_hash = pwd_context.encrypt(passwd)
         one_user = {'accout': accout, 'passwd_hash': passwd_hash}
         user_obj_id = user_db.user_collection.insert_one(one_user).inserted_id
+
+        #save token to redis
+        redis_db.set(str(user_obj_id), token)
 
         app.logger.info("add user [%s:%s:%s:%s]" % (accout, passwd_hash, token, user_obj_id))
         return token, str(user_obj_id)
@@ -159,13 +164,17 @@ class User(object):
                 send_message(accout, msg)
             app.logger.info("Get identify_code:%s for user %s" % (str(identify_code), accout))
             #set it to redis {accout:identify_code}
+            redis_db.set(accout, identify_code)
 
             return {'identify_code': identify_code}
         else:
             #get identify_code from redis {accout:identify_code}
             saved_identify_code = '111111'
+            saved_identify_code = redis_db.get(accout)
+
             if identify_code == saved_identify_code:
                 #delete identify_code from redis {accout:identify_code}
+                redis_db.delete(accout)
 
                 app.logger.info("Identify success for accout %s" % accout)
                 token, user_obj_id = cls.add_user(accout, passwd)

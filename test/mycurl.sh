@@ -2,7 +2,7 @@
 
 #test for app
 
-HOST="http://192.168.3.12/v1"
+HOST="http://192.168.3.12:8000/v1"
 num=2
 i=0
 while [ $i -lt $num ]; do
@@ -20,9 +20,9 @@ while [ $i -lt $num ]; do
 	echo "######register##########"
 	echo "########################"
 	#register and get token object_id
-	result=`curl -i -X POST -H "Content-Type: application/json" -d '{"accout":"1388913'$ACCOUT'","identify_code":"111111","passwd":"'$identify_code'"}' $HOST/users/register 2>/dev/null`
+	result=`curl -i -X POST -H "Content-Type: application/json" -d '{"accout":"1388913'$ACCOUT'","identify_code":"'$identify_code'","passwd":"'$identify_code'"}' $HOST/users/register 2>/dev/null`
 	TOKEN=`echo $result | awk -F'"' '{print $12}'` && OBJ_ID=`echo $result | awk -F'"' '{print $4}'`
-	echo "result is "$result && echo "token is "$TOKEN  && echo "object_id is "$OBJ_ID && echo "account is ""1388913'$ACCOUT'"
+	echo "result is "$result && echo "token is "$TOKEN  && echo "object_id is "$OBJ_ID && echo "accout is ""1388913'$ACCOUT'"
 
 	echo ""
 	echo "########################"
@@ -78,7 +78,7 @@ while [ $i -lt $num ]; do
 	curl -i -X GET $HOST/$TYPE/$POST_ID?token=$TOKEN
 
     #upload file
-    curl -i -X POST -F "action=upload" -F "file=@/tmp/file.tar.gz" $HOST/users/upload?token=$TOKEN
+    #curl -i -X POST -F "action=upload" -F "file=@/tmp/test.png" $HOST/users/upload?token=$TOKEN
 
 	i=`expr $i + 1`
 done

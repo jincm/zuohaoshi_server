@@ -11,10 +11,10 @@ UPLOAD_FOLDER = "/var/log/zuohaoshi"
 SECRET_KEY = 'Good man is well done'
 
 MONGODB_DATABASE = "mongodb://localhost:27017"
-
-
+REDIS_DB_HOST = '127.0.0.1'
+REDIS_DB_PORT = '6379'
 #SQLALCHEMY_DATABASE_URI = 'mysql://root@33.33.33.10:3306/overholt'
-CELERY_BROKER_URL = 'redis://33.33.33.10:6379/0'
+
 
 USERNAME = 'admin'
 PASSWORD = 'default'

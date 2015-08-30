@@ -5,6 +5,8 @@ pip install -r requirements.txt
 
 #requirements may include some package like this
 sudo pip install pymongo
+sudo pip install redis
+
 sudo pip install passlib
 sudo pip install itsdangerous
 sudo pip install flask-script
@@ -13,9 +15,16 @@ sudo pip install flask-script
 sudo apt-get install apache2-utils
 
 sudo apt-get install mongodb-org
+sudo apt-get install redis-server
+service redis-server restart
 
+#not need download and install OSS.zip,it was already put into project
 sudo apt-get install unzip
 OSS_Python_API_20150811.zip
+
+###deploy
+cp nginx_default /etc/nginx/sites-enabled/default
+cp supervisor.conf /etc/supervisor/conf.d/supervisor.conf
 
 ### Run
 ```sh
