@@ -23,8 +23,8 @@ def post_activity():
         app.logger.error("missing parameters:%s,%s" % (token,content))
         abort(400)
 
-    activity = Activity()
-    ret = activity.post_activity(current_user.user_id, content)
+    #activity = Activity()
+    ret = Activity.post_activity(current_user.user_id, content)
 
     app.logger.info("post activity:%s" % ret)
     return jsonify(ret)
@@ -34,17 +34,16 @@ def post_activity():
 def get_activity(post_id):
     app.logger.info("get activity:%s,%s,%s" % (post_id, request.headers, request.args))
 
-    token = request.args.get("token")
-    app.logger.info("token:%s" % token)
-    if not token:
-        app.logger.error("token:%s" % token)
-        abort(400)
-
-    user = User.get_user_fromtoken(token)
+    #token = request.args.get("token")
+    #app.logger.info("token:%s" % token)
+    #if not token:
+    #    app.logger.error("token:%s" % token)
+    #    abort(400)
+    #user = User.get_user_fromtoken(token)
     app.logger.info("current_user :%s,%s" % (current_user, current_user.user_id))
-    app.logger.info("user:%s" % user.user_id)
 
-    activity = Activity(post_id, user.user_id)
-    ret = activity.get_activity()
+    activity = Activity(post_id, current_user.user_id)
+    ret = activity.get_one_activity()
     app.logger.info("get_activity:%s" % ret)
+
     return jsonify(ret)

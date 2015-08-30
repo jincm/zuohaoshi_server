@@ -25,7 +25,7 @@ class User(object):
 
     def __init__(self, user_id=None):
         app.logger.info("user instance %s init" % user_id)
-        self.user_id = user_id
+        self.user_id = str(user_id)
         #self.id = user_id
 
         self.phone = None
@@ -53,7 +53,7 @@ class User(object):
         that and convert it to `unicode`.
         """
         try:
-            return (self.user_id)
+            return self.user_id
         except AttributeError:
             raise NotImplementedError("No `id` attribute - override get_id")
 
@@ -87,7 +87,7 @@ class User(object):
         return {'logout': self.user_id}
 
     @classmethod
-    def get_user_fromtoken(self, token):
+    def get_user_fromtoken(cls, token):
         app.logger.info("get user from token:%s\n" % token)
         #get accout from redis according token
         s = Serializer(app.config['SECRET_KEY'])
@@ -104,7 +104,7 @@ class User(object):
         return user
 
     @classmethod
-    def login(self, accout=None, passwd=None):
+    def login(cls, accout=None, passwd=None):
         app.logger.info("Login start:[%s]" % accout)
         #get passwd hash/object_id from mongodb
         result_find = user_collection.find_one({'accout': accout})
@@ -126,11 +126,11 @@ class User(object):
             #save token to redis
 
             app.logger.info("Login success:[%s:%s:%s]" % (accout, object_id, token))
-            return {"login": accout, "token": token}
+            return {"login": accout, "token": token, "object_id": str(object_id)}
 
 
     @classmethod
-    def add_user(self, accout=None, passwd=None):
+    def add_user(cls, accout=None, passwd=None):
         app.logger.info("add user start:[%s,%s]" % (accout, passwd))
         #generate token
         s = Serializer(app.config['SECRET_KEY'], expires_in=6000)
@@ -144,10 +144,10 @@ class User(object):
         user_obj_id = user_db.user_collection.insert_one(one_user).inserted_id
 
         app.logger.info("add user [%s:%s:%s:%s]" % (accout, passwd_hash, token, user_obj_id))
-        return token, user_obj_id
+        return token, str(user_obj_id)
 
     @classmethod
-    def register_user(self, accout=None, identify_code=None, passwd=None):
+    def register_user(cls, accout=None, identify_code=None, passwd=None):
         #username may be phone_num or email
         if identify_code is None:
             identify_code = random.randint(111111, 999999)
@@ -165,8 +165,8 @@ class User(object):
                 #delete identify_code from redis {accout:identify_code}
 
                 app.logger.info("Identify success for accout %s" % accout)
-                token, user_obj_id = self.add_user(accout, passwd)
-                return {"register": accout, "token": token}
+                token, user_obj_id = cls.add_user(accout, passwd)
+                return {"register": accout, "token": token, "object_id": user_obj_id}
             else:
                 app.logger.info("Identify error:%s,code:%s,saved:%s" % (accout, identify_code, saved_identify_code))
                 return {'error': 'Identify code not match'}

@@ -9,6 +9,7 @@ from bson import ObjectId, json_util
 
 from myapp.models import activity_db_client
 from myapp.models import user
+from myapp.models import group
 from myapp import app
 
 activity_db = activity_db_client.zuohaoshi
@@ -16,14 +17,14 @@ activity_collection = activity_db.activity_collecttion
 
 class Activity(object):
     def __init__(self, object_id=None, user_id=None):
+        app.logger.info("Activity instance:%s,%s" % (object_id, user_id))
         self.object_id = object_id
         self.user_id = user_id
         #self.current_time = gettimeofday()
         self.participant = set()
         self.type = '' #group/activity/loster
-        app.logger.info("Test for Activity db")
 
-    def get_activity(self):
+    def get_one_activity(self):
         app.logger.info("get_activity %s,%s" %(self.object_id, self.user_id))
         result = activity_collection.find_one({'_id': ObjectId(self.object_id)})
         ret = json.dumps(result, default=json_util.default)
@@ -31,7 +32,7 @@ class Activity(object):
         return json.loads(ret)
 
     @classmethod
-    def post_activity(self, user_id, content):
+    def post_activity(cls, user_id, content):
         app.logger.info("user:%s post one activity:%s" % (user_id, content))
         one_activity = {'cotent': content, 'user_id': user_id}
         post_id = activity_collection.insert_one(one_activity).inserted_id
