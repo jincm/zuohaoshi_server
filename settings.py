@@ -6,6 +6,8 @@ DEBUG = False
 LOG_INFO = True
 LOG_FILE = "/var/log/zuohaoshi/zuohaoshi.log"
 
+UPLOAD_FOLDER = "/var/log/zuohaoshi"
+
 SECRET_KEY = 'Good man is well done'
 
 MONGODB_DATABASE = "mongodb://localhost:27017"

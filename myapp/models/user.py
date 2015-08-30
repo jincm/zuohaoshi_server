@@ -16,6 +16,8 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
 from myapp.models import user_db_client
+from myapp.ext.short_message import send_message
+
 from myapp import app
 
 user_db = user_db_client.zuohaoshi
@@ -153,7 +155,8 @@ class User(object):
             identify_code = random.randint(111111, 999999)
             #call API send identify_code to phonenum
             if len(accout) == 11:#from app/web/weixin
-                msg = u"[做好事]: %d ,请与10分钟内完成手机号验证操作"
+                msg = u"[做好事]: %d ,请与10分钟内完成手机号验证操作" % identify_code
+                send_message(accout, msg)
             app.logger.info("Get identify_code:%s for user %s" % (str(identify_code), accout))
             #set it to redis {accout:identify_code}
 

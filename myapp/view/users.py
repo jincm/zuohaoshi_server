@@ -4,12 +4,15 @@
     zuohaoshi view
     Good man is well
 """
+import os
 import datetime
 
 from flask import Blueprint, request, abort, url_for, jsonify
 from flask.ext.login import login_required
+from werkzeug.utils import secure_filename
 
 from myapp.models.user import User
+from myapp.ext.file_oss import oss_upload_file as upload_file_to_store
 from myapp import app
 
 users_blueprint = Blueprint('users', __name__, url_prefix='/v1/users')
@@ -102,7 +105,22 @@ def add_user_byadmin():
     return jsonify({'username': accout}), 201, {'Location': url_for('.get_user')}
 
 
+ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
 #save file to oss
+@users_blueprint.route('/upload', methods=['POST'])
+@login_required
+def user_upload_file():
+    app.logger.info("start upload file")
+    f = request.files['file']
+    fname = secure_filename(f.filename)
+    localfile = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+    app.logger.info("start upload file to store:%s,%s" % (fname, localfile))
+
+    f.save(localfile)
+    res = upload_file_to_store('zuohaoshi/2015/beijing', fname, localfile)
+    app.logger.info("end upload file to store:%s,%s" % (res.status, res.read()))
+    return jsonify({'file': fname})
+
 #post
 #save redis
 #relationship

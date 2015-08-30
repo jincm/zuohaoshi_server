@@ -19,7 +19,8 @@ from flask.ext.login import LoginManager
 ################
 app = Flask(__name__)
 app.config.from_object("settings")
-#init_db(app)
+#upload file max is 16M
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
 ####################
 #### extensions ####

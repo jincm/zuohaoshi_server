@@ -14,10 +14,15 @@ sudo apt-get install apache2-utils
 
 sudo apt-get install mongodb-org
 
+sudo apt-get install unzip
+OSS_Python_API_20150811.zip
 
 ### Run
 ```sh
+test can use
 $ python manage.py runserver
+and for production
+$sudo /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
 ```
 
 ### Testing
