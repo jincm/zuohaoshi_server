@@ -24,7 +24,7 @@ users_blueprint = Blueprint('users', __name__, url_prefix='/v1/users')
 @users_blueprint.route('/register', methods=['GET', 'POST'])
 def register_user():
     app.logger.info("get user headers:[%s] args:[%s]" % (request.headers, request.args))
-    app.logger.info("json:[%s]\n" % request.json)
+    app.logger.info("json:[%s]\n" % request.json) #json:post,args:get,header have format
 
     #app.logger.info(url_for('.show_user', user='test'))
 

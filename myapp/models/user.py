@@ -8,25 +8,25 @@ import random
 import os
 import sys
 import datetime
+import json
+from bson import ObjectId, json_util
 
 from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
 from myapp.models import user_db_client
-from bson.objectid import ObjectId
-
 from myapp import app
 
 user_db = user_db_client.zuohaoshi
-
+user_collection = user_db.user_collection
 
 class User(object):
 
     def __init__(self, user_id=None):
         app.logger.info("user instance %s init" % user_id)
         self.user_id = user_id
-        self.id = 0
+        #self.id = user_id
 
         self.phone = None
         self.friends = set()
@@ -38,8 +38,11 @@ class User(object):
 
     def __repr__(self):
         return '<User %r>' % (self.user_id)
+
     def is_authenticated(self):
+        app.logger.info("authenticated")
         return True
+
     def is_active(self):
         return True
     def is_anonymous(self):
@@ -50,14 +53,16 @@ class User(object):
         that and convert it to `unicode`.
         """
         try:
-            return unicode(self.id)
+            return (self.user_id)
         except AttributeError:
             raise NotImplementedError("No `id` attribute - override get_id")
 
     def show_user(self):
         app.logger.info("show user %s" % self.user_id)
-
-        return {'id': self.user_id}
+        result = user_collection.find_one({'_id': ObjectId(self.user_id)})
+        ret = json.dumps(result, default=json_util.default)
+        app.logger.info("show user %s" % ret)
+        return json.loads(ret)
 
     def del_user(self):
         pass
@@ -102,7 +107,7 @@ class User(object):
     def login(self, accout=None, passwd=None):
         app.logger.info("Login start:[%s]" % accout)
         #get passwd hash/object_id from mongodb
-        result_find = user_db.user_collection.find_one({'accout': accout})
+        result_find = user_collection.find_one({'accout': accout})
         db_passwd_hash = result_find['passwd_hash']
         object_id = result_find['_id']
 
@@ -116,7 +121,7 @@ class User(object):
             return {'error': 'login failed'}
         else:
             #generate token
-            s = Serializer(app.config['SECRET_KEY'], expires_in=60)#3600000=41 day
+            s = Serializer(app.config['SECRET_KEY'], expires_in=6000)#3600000=41 day
             token = s.dumps({'object_id': '%s' % object_id, 'password': passwd})
             #save token to redis
 
@@ -128,7 +133,7 @@ class User(object):
     def add_user(self, accout=None, passwd=None):
         app.logger.info("add user start:[%s,%s]" % (accout, passwd))
         #generate token
-        s = Serializer(app.config['SECRET_KEY'], expires_in=60)
+        s = Serializer(app.config['SECRET_KEY'], expires_in=6000)
         object_id = 'test'
         token = s.dumps({'object_id': '%s' % object_id, 'password': passwd})
         #save token to redis
