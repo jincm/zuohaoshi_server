@@ -2,8 +2,9 @@
 
 #test for app
 
-HOST="http://192.168.3.12:8000/v1"
-num=2
+HOST="http://127.0.0.1:8000/v1"
+num=1
+
 i=0
 while [ $i -lt $num ]; do
 	echo ""
