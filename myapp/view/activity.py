@@ -87,7 +87,7 @@ def del_activity(post_id):
 #comment
 @activity_blueprint.route("/post_cm", methods=["POST"])
 @login_required
-def post_activity_comment(<post_id>):
+def post_activity_comment(post_id):
     app.logger.info("post activity:%s,%s" % (request.headers, request.json))
     app.logger.info("current_user :%s,%s" % (current_user, current_user.user_id))
     token = request.args.get("token")
@@ -116,7 +116,7 @@ def post_activity_comment(<post_id>):
 
 @activity_blueprint.route("/<post_id>/<comment_id>", methods=['DELETE'])
 @login_required
-def del_activity_comment(post_id,comment_id):
+def del_activity_comment(post_id, comment_id):
     app.logger.info("get activity:%s,%s,%s" % (post_id, request.headers, request.args))
 
     #token = request.args.get("token")

@@ -14,6 +14,8 @@ import json
 
 import requests
 
+if os.getcwd() not in sys.path:
+    sys.path.append(os.getcwd())
 from myapp.models import redis_db
 
 #Instant Messaging base class
@@ -225,19 +227,25 @@ class easemob_IM(IM_BASE):
         try:
             if auth:
                 headers['Authorization'] = 'Bearer ' + auth
+
+            self.logger.info("%s %s:data[%s] head:%s\n", method, url, payload, headers)
+
             if method == 'GET':
-                r = requests.get(url, headers)
+                r = requests.get(url, headers=headers)
             elif method == 'POST':
-                r = requests.post(url, data=json.dumps(payload), headers)
+                r = requests.post(url, data=json.dumps(payload), headers=headers)
             elif method == 'DELETE':
-                r = requests.delete(url, headers)
+                r = requests.delete(url, headers=headers)
             else:
                 self.logger.info("request no method\n")
                 return True
-        except:
-            print "aa"
+        except Exception, e:
+            print "error is coming......................."
+            print e
+            self.logger.error("error is coming..........:%s\n" % e)
+
+            return False, e
         finally:
-            print "bb"
             if r.status_code == requests.codes.ok:
                 return True, r.json()
             else:
@@ -251,7 +259,7 @@ class easemob_IM(IM_BASE):
         token_get = redis_db.get(EASEMOB_TOKEN_KEY)
         token = None
         if token_get is not None:
-            self.logger.info("Get token from redis" + token_get)
+            self.logger.info("Get token from redis " + token_get)
             token, expires = token_get.split("+")
 
         if token is None or time() > expires:
@@ -259,7 +267,7 @@ class easemob_IM(IM_BASE):
             payload = {'grant_type': 'client_credentials', 'client_id': client_id, 'client_secret': client_secret}
 
             success, result = self.easemob_request(url, "POST", payload)
-            self.logger.info("Get token from " + url + result)
+            self.logger.info("Get token from " + url + "\n" + result['access_token'])
             #save token to redis
             token = result['access_token']
             token_new = result['access_token'] + "+" + str(result['expires_in'] + int(time()))
@@ -276,8 +284,14 @@ class easemob_IM(IM_BASE):
     Request Body ： {“username”:”${用户名}”,”password”:”${密码}”, “nickname”:”${昵称值}”}
     """
     def register_user(self, username, passwd, nickname=None):
-        pass
+        token = self.easemob_get_token()
+        url = endpoint + appurl + "/users"
+        payload = {'username': username, 'password': passwd, 'nickname': nickname}
 
+        success, result = self.easemob_request(url, "POST", payload, auth=token)
+        self.logger.info("register_user reulst is %s " % result)
+
+        return result
     """
     注册IM用户[批量]
     Path : /{org_name}/{app_name}/users
@@ -336,7 +350,14 @@ class easemob_IM(IM_BASE):
     Request Body ： 无
     """
     def del_user(self, username):
-        pass
+        token = self.easemob_get_token()
+        url = endpoint + appurl + "/users/" + username
+        payload = {'username': username}
+
+        success, result = self.easemob_request(url, "DELETE", payload, auth=token)
+        self.logger.info("del_user reulst is %s " % result)
+
+        return result
 
 
     """
@@ -737,8 +758,15 @@ class easemob_IM(IM_BASE):
         "members":["jma2","jma3"] //群组成员,此属性为可选的,但是如果加了此项,数组元素至少一个（注：群主jma1不需要写入到members里面）
     }
     """
-    def create_chatgroup(self, username, group_body):
-        pass
+    def create_chatgroup(self, username, group_body=None):
+        token = self.easemob_get_token()
+        url = endpoint + appurl + "/chatgroups"
+        payload = group_body
+
+        success, result = self.easemob_request(url, "POST", payload, auth=token)
+        self.logger.info("del_user reulst is %s " % result)
+
+        return result
 
     """
     Path : /{org_name}/{app_name}/chatgroups/{group_id}
@@ -1028,18 +1056,44 @@ class easemob_IM(IM_BASE):
 #######################Test#######################################################
 ##################################################################################
 if __name__ == '__main__':
+    #when test,you must cd /home/jincm/zuohaoshi/server first,also is myapp's parent dir
+    #and then "sudo python myapp/ext/easemob.py"
     import logging
+    import random
+
     logger = logging.getLogger()
+    fh = logging.FileHandler('/tmp/easemob.log', 'a+')
+    logger.addHandler(fh)
+    logger.setLevel(logging.DEBUG)
+
     im_obj = easemob_IM(logger)
     token = im_obj.easemob_get_token()
 
-    """
-    for i in range(1,100):
-        im_obj.register_user(username, passwd, nickname=None)
+    for i in xrange(1, 10):
+        username = str(random.randint(11111,99999))
+        im_obj.register_user(username, '123456', nickname=username)
+
+        im_obj.del_user(username)
+
     #im_obj.register_users(userslist)
-    im_obj.get_user(username)
-    im_obj.get_users(limit,cursor=None)
-    im_obj.del_user(username)
+    #im_obj.get_user(username)
+    #im_obj.get_users(limit,cursor=None)
+
+
+    #im_obj.send_txt_msg(username, msg_body)
+
+    group_body = {}
+    group_body['groupname'] = 'testgroup'
+    group_body['desc'] = 'server'
+    group_body['public'] = True
+    group_body['owner'] = '76439'
+    im_obj.create_chatgroup(username, group_body)
+
+    #im_obj.create_chatroom(username, chatroom_body)
+
+    """
+
+    #
     im_obj.reset_passwd(username, passwd)
     im_obj.change_nickname(username, nickname)
     im_obj.add_friend(username, friend_username)
@@ -1057,17 +1111,20 @@ if __name__ == '__main__':
     im_obj.deactivate_user(username)
     im_obj.activate_user(username)
     im_obj.disconnect_user(username)
+
     im_obj.upload_file(username, file)
     im_obj.download_file(username, file_uuid)
-    im_obj.send_txt_msg(username, msg_body)
+
+
     im_obj.send_img_msg(username, msg_body)
     im_obj.send_audio_msg(username, msg_body)
     im_obj.send_video_msg(username, msg_body)
     im_obj.send_cmd_msg(username, msg_body)
+
     im_obj.get_chatgroups(username)
     im_obj.get_chatgroups_bypages(username)
     im_obj.get_group_detail(username, group_ids)
-    im_obj.create_chatgroup(username, group_body)
+
     im_obj.change_chatgroup(username, group_body)
     im_obj.del_chatgroup(group_id)
     im_obj.getusers_in_chatgroup(group_id)
@@ -1082,6 +1139,7 @@ if __name__ == '__main__':
     im_obj.addblacklists_to_chatgroup(username, group_id, black_users)
     im_obj.delblacklist_from_chatgroup(username, group_id, black_user)
     im_obj.delblacklists_from_chatgroup(username, group_id, black_users)
+
     im_obj.create_chatroom(username, chatroom_body)
     im_obj.change_chatroom(username, chatroom_id, chatroom_body)
     im_obj.del_chatroom(username, chatroom_id)

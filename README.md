@@ -62,7 +62,7 @@ sudo service nginx restart
 ### Run
 test can use
 $ sudo python manage.py runserver
-and for production
+for production
 $sudo /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
 
 
