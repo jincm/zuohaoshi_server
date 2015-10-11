@@ -17,7 +17,9 @@ pip freeze > requirements.txt
 #install from requirments
 pip install -r requirements.txt
 
-#163 apt source
+sudo pip install requests
+
+#163 apt source for ubuntu14.04
 #cat /etc/apt/sources.list
 deb http://mirrors.163.com/ubuntu/ trusty main restricted universe multiverse
 deb http://mirrors.163.com/ubuntu/ trusty-security main restricted universe multiverse

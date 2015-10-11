@@ -66,3 +66,6 @@ class Group(object):
 
     def group_nearby(self):
         pass
+
+    def group_search(self):
+        pass

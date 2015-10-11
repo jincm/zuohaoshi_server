@@ -4,18 +4,21 @@
     zuohaoshi view
     Good man is well
 """
+#system package
 import os
 import datetime
 
+#flask and other thirdparty package
 from flask import Blueprint, request, abort, url_for, jsonify
-from flask.ext.login import login_required
+from flask.ext.login import login_required, current_user
 from werkzeug.utils import secure_filename
 
+#project package
 from myapp.models.user import User
 from myapp.ext.file_oss import oss_upload_file as upload_file_to_store
 from myapp import app
 
-users_blueprint = Blueprint('users', __name__, url_prefix='/v1/users')
+users_blueprint = Blueprint('users', __name__, url_prefix='/1/u')
 
 #loster_blueprint = Blueprint('loster', __name__)
 #message_blueprint = Blueprint('message', __name__)
@@ -121,8 +124,49 @@ def user_upload_file():
     app.logger.info("end upload file to store:%s,%s" % (res.status, res.read()))
     return jsonify({'file': fname})
 
-#post
-#save redis
-#relationship
-#face_match
+
+#user add friends/follow sb/followers/blacklist/search
+@users_blueprint.route('/fs/<user_id>', methods=["GET"])
+@login_required
+def follow_sb(user_id):
+    app.logger.info("get activity:%s,%s,%s" % (request.headers, request.args))
+    app.logger.info("current_user :%s,%s" % (current_user, current_user.user_id))
+
+    user = User(user_id)
+    ret = user.show_user()
+    app.logger.info("show_user %s" % user_id)
+    return jsonify(ret)
+
+@users_blueprint.route('/ufs/<user_id>', methods=["GET"])
+@login_required
+def unfollow_sb(user_id):
+    app.logger.info("get activity:%s,%s,%s" % (request.headers, request.args))
+    app.logger.info("current_user :%s,%s" % (current_user, current_user.user_id))
+
+    user = User(user_id)
+    ret = user.show_user()
+    app.logger.info("show_user %s" % user_id)
+    return jsonify(ret)
+
+@users_blueprint.route('/black/<user_id>', methods=["GET"])
+@login_required
+def black_sb(user_id):
+    app.logger.info("get activity:%s,%s,%s" % (request.headers, request.args))
+    app.logger.info("current_user :%s,%s" % (current_user, current_user.user_id))
+
+    user = User(user_id)
+    ret = user.show_user()
+    app.logger.info("show_user %s" % user_id)
+    return jsonify(ret)
+
+@users_blueprint.route('/search/<user_id>', methods=["GET"])
+@login_required
+def search_sb(user_id):
+    app.logger.info("get activity:%s,%s,%s" % (request.headers, request.args))
+    app.logger.info("current_user :%s,%s" % (current_user, current_user.user_id))
+
+    user = User(user_id)
+    ret = user.show_user()
+    app.logger.info("show_user %s" % user_id)
+    return jsonify(ret)
 
