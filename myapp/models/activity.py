@@ -39,8 +39,15 @@ class Activity(object):
 
         return {'post_id': str(post_id)}
 
+    def activity_nearby(self):
+        pass
+
+    def share_one_activity(self):
+        pass
+
     def track_activity(self):
         pass
+
     def del_activity(self, user=None):
         pass
 
@@ -62,20 +69,12 @@ class Activity(object):
         pass
     def signout_activity(self):
         pass
-
-
     def del_from_group_byower(self):
         pass
     def del_from_activity_byower(self):
         pass
 
     def edit_group_info(self):
-        pass
-
-    def activity_nearby(self):
-        pass
-
-    def share_one_activity(self):
         pass
 
 

@@ -8,7 +8,7 @@ LOG_FILE = "/var/log/zuohaoshi/zuohaoshi.log"
 
 UPLOAD_FOLDER = "/var/log/zuohaoshi"
 
-SECRET_KEY = 'Good man is well done'
+SECRET_KEY = 'goodman'
 
 MONGODB_DATABASE = "mongodb://localhost:27017"
 REDIS_DB_HOST = '127.0.0.1'

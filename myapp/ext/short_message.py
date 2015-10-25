@@ -6,6 +6,6 @@
 """
 #the thirty party api for send message to identify register for app
 
-def send_message(accout, msg):
+def send_short_message(accout, msg):
     print "send message"
     pass

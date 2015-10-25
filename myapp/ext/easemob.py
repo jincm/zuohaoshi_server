@@ -18,8 +18,9 @@ if os.getcwd() not in sys.path:
     sys.path.append(os.getcwd())
 from myapp.models import redis_db
 
+
 #Instant Messaging base class
-class IM_BASE(object):
+class ImBase(object):
     def register_user(self, username, passwd, nickname=None):
         pass
 
@@ -218,9 +219,9 @@ EASEMOB_TOKEN_KEY = "easemob_token"
 """
 
 
-class easemob_IM(IM_BASE):
-    def __init__(self, logger):
-        self.logger = logger
+class EasemobIM(ImBase):
+    def __init__(self, mylogger):
+        self.logger = mylogger
         self.logger.info("easemob_IM init\n")
 
     def easemob_request(self, url, method, payload=None, headers=JSON_HEADER, auth=None):
@@ -249,6 +250,7 @@ class easemob_IM(IM_BASE):
             if r.status_code == requests.codes.ok:
                 return True, r.json()
             else:
+                print "error is coming......................."
                 return False, r.text
 
     #Request Headers : {“Content-Type”:”application/json”}
@@ -578,7 +580,7 @@ class easemob_IM(IM_BASE):
         }
     }
     """
-    def send_txt_msg(self, username, msg_body):
+    def send_txt_msg(self, user_name, msg_body):
         pass
 
     """
@@ -1066,7 +1068,7 @@ if __name__ == '__main__':
     logger.addHandler(fh)
     logger.setLevel(logging.DEBUG)
 
-    im_obj = easemob_IM(logger)
+    im_obj = EasemobIM(logger)
     token = im_obj.easemob_get_token()
 
     for i in xrange(1, 10):

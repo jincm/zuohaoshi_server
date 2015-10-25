@@ -25,3 +25,6 @@ def oss_upload_file(path, filename, localfile):
 
 def oss_download_file(path, filename, localfile):
     pass
+
+def oss_delete_file(path, filename):
+    pass
