@@ -9,6 +9,8 @@ from oss.oss_api import *
 from oss.oss_xml_handler import *
 
 endpoint="oss-cn-beijing.aliyuncs.com"
+# "xinsongkeji.oss-cn-beijing-internal.aliyuncs.com"
+# "xinsongkeji.oss-cn-beijing.aliyuncs.com"
 ACCESS_ID = "O4LzRirHOopmmAak"
 SECRET_ACCESS_KEY = "q5XcjfAbqcC91iFUEhoRFPjHrOXVPm"
 accessKeyId, accessKeySecret = ACCESS_ID, SECRET_ACCESS_KEY

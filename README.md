@@ -78,6 +78,7 @@ $ python manage.py cov
 
 Change Log
 ----------
+**v0.4** - user/activity/face++/easemob
 **v0.3** - register/login/logout/redis/mongodb
 **v0.2** - Return token.
 **v0.1** - Initial release.

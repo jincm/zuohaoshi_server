@@ -7,9 +7,9 @@
 import time
 import requests
 
-faceaa_api_key = "58d296e0f2c54f238edfa1556201807b"
-faceaa_api_secret = "4eAtNRcN0Vnj8rA5dVa0XAdFGK0YdxWL"
-faceaa_url = "apicn.faceplusplus.com/v2"
+facepp_api_key = "58d296e0f2c54f238edfa1556201807b"
+facepp_api_secret = "4eAtNRcN0Vnj8rA5dVa0XAdFGK0YdxWL"
+facepp_url = "apicn.faceplusplus.com/v2"
 
 # Image，Face，Person，Faceset Group
 
@@ -22,9 +22,9 @@ class FaceSearch(object):
         pass
 
 
-class FaceAASearch(FaceSearch):
+class FacePPSearch(FaceSearch):
     def __init__(self, mylogger, type, city):
-        self.url = "https://" + faceaa_url
+        self.url = "https://" + facepp_url
 
         self.logger = mylogger
         # self.city = city
@@ -32,7 +32,7 @@ class FaceAASearch(FaceSearch):
 
         self._faceset_create(self.faceset_name)
 
-        self.logger.info("FaceAASearch init\n")
+        self.logger.info("FacePPSearch init\n")
 
     def submit_lost_info(self, image_url, from_url):
         self.logger.info("submit_lost_info:[%s][%s]", image_url, from_url)
@@ -70,8 +70,8 @@ class FaceAASearch(FaceSearch):
             index = 1  # it would use while in the future if one city has more 1w's pictures
             url = self.url + "/faceset/get_info"
             my_headers = dict()
-            my_headers['api_key'] = faceaa_api_key
-            my_headers['api_secret'] = faceaa_api_secret
+            my_headers['api_key'] = facepp_api_key
+            my_headers['api_secret'] = facepp_api_secret
             my_headers['faceset_name'] = self.faceset_name + str(index)
             res = requests.get(url, headers=my_headers)
 
@@ -105,8 +105,8 @@ class FaceAASearch(FaceSearch):
             url = self.url + "/info/get_faceset_list"
 
             my_headers = dict()
-            my_headers['api_key'] = faceaa_api_key
-            my_headers['api_secret'] = faceaa_api_secret
+            my_headers['api_key'] = facepp_api_key
+            my_headers['api_secret'] = facepp_api_secret
 
             resp = requests.get(url, hearders=self.my_headers)
 
@@ -127,8 +127,8 @@ class FaceAASearch(FaceSearch):
             url = self.url + "/detection/detect"
 
             my_headers = dict()
-            my_headers['api_key'] = faceaa_api_key
-            my_headers['api_secret'] = faceaa_api_secret
+            my_headers['api_key'] = facepp_api_key
+            my_headers['api_secret'] = facepp_api_secret
             my_headers['url'] = imgurl
             my_headers['tag'] = tag
 
@@ -151,8 +151,8 @@ class FaceAASearch(FaceSearch):
             url = self.url + "/train/search"
 
             my_headers = dict()
-            my_headers['api_key'] = faceaa_api_key
-            my_headers['api_secret'] = faceaa_api_secret
+            my_headers['api_key'] = facepp_api_key
+            my_headers['api_secret'] = facepp_api_secret
             my_headers['faceset_name'] = faceset_name
 
             resp = requests.get(url, hearders=my_headers)
@@ -174,8 +174,8 @@ class FaceAASearch(FaceSearch):
             url = self.url + "/recognition/search"
 
             my_headers = dict()
-            my_headers['api_key'] = faceaa_api_key
-            my_headers['api_secret'] = faceaa_api_secret
+            my_headers['api_key'] = facepp_api_key
+            my_headers['api_secret'] = facepp_api_secret
             my_headers['key_face_id'] = key_face_id
             my_headers['faceset_name'] = faceset_name
             my_headers['count'] = 5
@@ -200,8 +200,8 @@ class FaceAASearch(FaceSearch):
             url = self.url + "/recognition/compare"
 
             my_headers = dict()
-            my_headers['api_key'] = faceaa_api_key
-            my_headers['api_secret'] = faceaa_api_secret
+            my_headers['api_key'] = facepp_api_key
+            my_headers['api_secret'] = facepp_api_secret
             my_headers['face_id1'] = face_id1
             my_headers['face_id2'] = face_id2
             my_headers['async'] = 'false'
@@ -225,8 +225,8 @@ class FaceAASearch(FaceSearch):
             url = self.url + "/recognition/compare"
 
             my_headers = dict()
-            my_headers['api_key'] = faceaa_api_key
-            my_headers['api_secret'] = faceaa_api_secret
+            my_headers['api_key'] = facepp_api_key
+            my_headers['api_secret'] = facepp_api_secret
             my_headers['faceset_name'] = faceset_name
             my_headers['face_id'] = face_id
 
@@ -262,7 +262,7 @@ if __name__ == '__main__':
     logger.addHandler(fh)
     logger.setLevel(logging.DEBUG)
 
-    face_search_obj = FaceAASearch(logger)
+    face_search_obj = FacePPSearch(logger)
     for i in xrange(1, 10):
         lost_url = str(i)
         from_url = str(i)
