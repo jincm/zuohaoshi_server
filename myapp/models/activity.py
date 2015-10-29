@@ -13,29 +13,30 @@ from myapp.models import group
 from myapp import app
 
 activity_db = activity_db_client.zuohaoshi
-activity_collection = activity_db.activity_collecttion
 
 class Activity(object):
-    def __init__(self, object_id=None, user_id=None):
+    def __init__(self, object_id=None, user_id=None, post_type=None):
         app.logger.info("Activity instance:%s,%s" % (object_id, user_id))
         self.object_id = object_id
         self.user_id = user_id
         #self.current_time = gettimeofday()
         self.participant = set()
-        self.type = '' #group/activity/loster
+        self.post_type = post_type  #group/activity/loster
+        self.collection = activity_db.get_collection(post_type)
 
     def get_one_activity(self):
         app.logger.info("get_activity %s,%s" %(self.object_id, self.user_id))
-        result = activity_collection.find_one({'_id': ObjectId(self.object_id)})
+        result = self.collection.find_one({'_id': ObjectId(self.object_id)})
         ret = json.dumps(result, default=json_util.default)
         app.logger.info("get_activity %s" % ret)
         return json.loads(ret)
 
     @classmethod
-    def post_activity(cls, user_id, content):
-        app.logger.info("user:%s post one activity:%s" % (user_id, content))
+    def post_activity(cls, user_id, post_type, content):
+        app.logger.info("user:%s post one activity:%s, %s\n" % (user_id, post_type, content))
         one_activity = {'cotent': content, 'user_id': user_id}
-        post_id = activity_collection.insert_one(one_activity).inserted_id
+        collection = activity_db.get_collection(post_type)
+        post_id = collection.insert_one(one_activity).inserted_id
 
         return {'post_id': str(post_id)}
 

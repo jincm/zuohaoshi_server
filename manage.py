@@ -22,7 +22,7 @@ manager.add_command("shell", Shell(make_context=make_shell_context))
 @manager.command
 def deploy():
   """Run deployment tasks."""
-  #To do:chmod /var/log/zuohaoshi;chmod 777 /var/run/
+  # To do:chmod /var/log/zuohaoshi;chmod 777 /var/run/
   pass
 
 

@@ -13,15 +13,15 @@ from myapp import app
 activity_blueprint = Blueprint('activity', __name__, url_prefix='/1/ay')#activity
 
 
-@activity_blueprint.route("/post", methods=["POST"])
+@activity_blueprint.route("/<post_type>/post", methods=["POST"])
 @login_required
-def post_activity():
-    app.logger.info("post activity:%s,%s" % (request.headers, request.json))
-    app.logger.info("current_user :%s,%s" % (current_user, current_user.user_id))
+def post_activity(post_type):
+    app.logger.info("post activity:%s,%s\n" % (request.headers, request.json))
+    app.logger.info("type:%s,current_user:%s\n" % (post_type, current_user.user_id))
     token = request.args.get("token")
     content = request.json.get("content")
     if token is None or content is None:
-        app.logger.error("missing parameters:%s,%s" % (token,content))
+        app.logger.error("missing parameters:%s,%s" % (token, content))
         abort(400)
 
     #if it has files
@@ -36,15 +36,15 @@ def post_activity():
     #return jsonify({'file': fname})
 
     #activity = Activity()
-    ret = Activity.post_activity(current_user.user_id, content)
+    ret = Activity.post_activity(current_user.user_id, post_type, content)
 
-    app.logger.info("post activity:%s" % ret)
+    app.logger.info("post activity ret [%s]\n" % ret)
     return jsonify(ret)
 
 
-@activity_blueprint.route("/<post_id>", methods=['GET'])
+@activity_blueprint.route("/<post_type>/<post_id>", methods=['GET'])
 @login_required
-def get_activity(post_id):
+def get_activity(post_type, post_id):
     app.logger.info("get activity:%s,%s,%s" % (post_id, request.headers, request.args))
 
     #token = request.args.get("token")
@@ -61,17 +61,6 @@ def get_activity(post_id):
 
     return jsonify(ret)
 
-
-@activity_blueprint.route("/search", methods=['GET'])
-@login_required
-def search_activity():
-    app.logger.info("get activity:%s,%s" % (request.headers, request.args))
-
-
-@activity_blueprint.route("/track", methods=['GET'])
-@login_required
-def track_activity():
-    app.logger.info("get activity:%s,%s" % (request.headers, request.args))
 
 @activity_blueprint.route("/<post_id>", methods=['DELETE'])
 @login_required
@@ -141,3 +130,15 @@ def del_activity_comment(post_id, comment_id):
     app.logger.info("get_activity:%s" % ret)
 
     return jsonify(ret)
+
+
+@activity_blueprint.route("/search", methods=['GET'])
+@login_required
+def search_activity():
+    app.logger.info("get activity:%s,%s" % (request.headers, request.args))
+
+
+@activity_blueprint.route("/track", methods=['GET'])
+@login_required
+def track_activity():
+    app.logger.info("get activity:%s,%s" % (request.headers, request.args))
