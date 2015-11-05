@@ -18,14 +18,14 @@ from itsdangerous import (TimedJSONWebSignatureSerializer
 from myapp.models import user_db_client
 from myapp.models import redis_db, CURRENT_USER_ID
 from myapp.ext.short_message import send_short_message
-from myapp.ext.easemob import easemob_IM
+from myapp.ext.easemob import EasemobIM
 from myapp import app
 
 user_db = user_db_client.zuohaoshi
 user_collection = user_db.user_collection
 # user_db.user_collection.create_index("_id")
 
-im_obj = easemob_IM(app.logger)
+im_obj = EasemobIM(app.logger)
 
 # These keys are intentionally short, so as to save on memory in redis
 FRIENDS_KEY = 'FR'
@@ -165,6 +165,8 @@ class User(object):
         # clear redis token
         redis_db.delete(self.user_id)
 
+        # delete his activities in db
+
         app.logger.info("del_user [%s:%s]" % (self.user_id, user_id))
         return {'del': user_id}
 
@@ -202,9 +204,20 @@ class User(object):
 
             return {'logout': self.user_id}
 
-    def modify_user(self, info):
+    def modify_user(self, info, update='modify'):
         app.logger.info("save user's new info to db:[%s]" % info)
-        result = user_db.user_collection.update({'_id': self.user_id}, {'$set': info})
+        if update == 'modify':
+            for one in info:
+                new_info = {one: info[one]}
+                if one in ['post', 'friends', 'follower', 'followee']:
+                    # result = user_db.user_collection.update({'_id': self.user_id}, {'$addToSet': info})
+                    result = user_db.user_collection.update({'_id': self.user_id}, {'$push': new_info})
+                else:
+                    result = user_db.user_collection.update({'_id': self.user_id}, {'$set': new_info})
+        elif update == 'delete':
+            new_info = info
+            result = user_db.user_collection.update({'_id': self.user_id}, {'$pull': new_info})
+
         if result.get('nModified') != 1:
             app.logger.error("result is %s" % result)
             return result
@@ -345,6 +358,11 @@ class User(object):
 
     def search_one_person(self):
         pass
+
+    def get_sb_activities(self):
+        index = 10
+        num = 10
+        return ""  # should use show_user
 
 
 class Loster(object):

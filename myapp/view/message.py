@@ -14,14 +14,6 @@ from myapp import app
 
 message_blueprint = Blueprint('admin', __name__, url_prefix='/1/mg')
 
-@message_blueprint.route("/hello", methods=["GET", "POST"])
-def hello():
-    user = User()
-    #ac = Activity()
-    group = Group()
-    app.logger.info("Test for admin")
-    return "hello admin"
-
 
 @message_blueprint.route('/sd', methods=['POST'])
 @login_required
