@@ -15,8 +15,6 @@ redis_db = redis.Redis(app.config['REDIS_DB_HOST'], app.config['REDIS_DB_PORT'])
 
 # init some values
 CURRENT_USER_ID = 'current_user_id'
-if redis_db.get(CURRENT_USER_ID) is None:
-    redis_db.set(CURRENT_USER_ID, '10000')
 
 
 """

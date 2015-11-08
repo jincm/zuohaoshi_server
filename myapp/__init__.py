@@ -64,17 +64,21 @@ from myapp.models.user import *
 from myapp.models.activity import *
 from myapp.models.group import *
 
+
 ####################
 # ### flask-login ##
 ####################
 @login_manager.request_loader
 def load_user_from_request(request):
-    app.logger.info("get user \nargs:[%s]\nheaders:[%s]" % (request.args, request.headers))
-    token = request.args.get("token")
-    if token is None:
+    app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
+    if request.args and "token" in request.args:
+        token = request.args.get("token")
+    elif request.json and "token" in request.json:
+        token = request.json.get("token")
+    elif request.headers and "token" in request.headers:
         token = request.headers.get("token")
-        if token is None:
-            return None
+    else:
+        return None
     return User.get_user_from_token(token)
 
 app.logger.info("end for flask config and init\n")

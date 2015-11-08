@@ -18,9 +18,14 @@ from myapp.models import redis_db
 
 activity_db = activity_db_client.zuohaoshi
 
+# These keys are intentionally short, so as to save on memory in redis
+POST_KEY = 'P'
+PRAISE_NUM_FIELD = 'PN'
+READ_NUM_FIELD = 'RN'
+
 class Activity(object):
     def __init__(self, user_id=None, post_type=None, post_id=None):
-        app.logger.info("Activity instance:user_id:%s,%s,%s" % (user_id, post_type, object_id))
+        app.logger.info("Activity instance:user_id:%s,%s,%s" % (user_id, post_type, post_id))
         self.user_id = user_id
         self.post_type = post_type  # group/activity/loster
         self.post_id = post_id
@@ -28,78 +33,104 @@ class Activity(object):
         self.collection = activity_db.get_collection(post_type)
 
     @classmethod
-    def post_activity(cls, user_id, post_type, content, img_urls):
-        app.logger.info("user:%s post one activity:%s, %s\n" % (user_id, post_type, content))
-        mytime = int(time.time())
-        one_activity = content
-        one_activity['user_id'] = user_id
-        one_activity['time'] = mytime
-        one_activity['img_urls'] = img_urls  # ["a.jpg","/b/c/d.jpg"]
+    def post_activity(cls, user_id, post_type, post_data, post_id=None):
+        app.logger.info("user:%s post one activity:%s, %s\n" % (user_id, post_type, post_data))
+        one_activity = post_data
+        # one_activity['user_id'] = user_id
+        # one_activity['time'] = mytime
+        # one_activity['img_urls'] = img_urls  # ["a.jpg","/b/c/d.jpg"]
 
         collection = activity_db.get_collection(post_type)
-        post_id = collection.insert_one(one_activity).inserted_id
+        if post_id is None:
+            post_id = collection.insert_one(one_activity).inserted_id
+            return {'post_id': str(post_id)}
+        else:
+            result = collection.update({'_id': ObjectId(post_id)}, {'$set': post_data})
+            return dict({'post_id': str(post_id)}, **post_data)
 
-        # save the post info to user db
-        user = User(user_id)
-        infos = dict()
-        infos['post'] = '%s/%s' % (post_type, post_id)
-        infos['lastud'] = mytime
-        user.modify_user(infos, update='modify')
-
-        return {'post_id': str(post_id)}
 
     def get_one_activity(self):
         app.logger.info("get_activity %s,%s,%s" % (self.post_type, self.post_id, self.user_id))
         result = self.collection.find_one({'_id': ObjectId(self.post_id)})
+
+        app.logger.info("get_activity result:%s" % result)
+        if result is None:
+            return {'Error': 'post not found'}
+
+        # get other info from redis
+        praise_num = redis_db.hget(POST_KEY + self.post_id, PRAISE_NUM_FIELD)
+        praise_dict = {'praise_num': praise_num}
+
         ret = json.dumps(result, default=json_util.default)
         app.logger.info("get_activity %s" % ret)
         return json.loads(ret)
 
-    def del_activity(self):
-        app.logger.info("user:%s del activity:%s, %s\n" % (self.user_id, self.post_type, self.post_id))
-
-        # check if the post's owner is current user
-        res = self.collection.remove({'_id': self.post_id, 'user_id': self.user_id})
-
-        info = dict()
-        info['post'] = '%s/%s' % (self.post_type, self.post_id)
-        # save the post info to user db
-        user = User(self.user_id)
-        user.modify_user(info, update='delete')
-
-        return {'post_id': str(self.post_id)}
-
-    def post_comment(self, comment):
+    def post_comment(self, comment_info):
         # check if the post's owner is current user
         app.logger.info("user:%s post one comment:%s, %s\n" % (self.user_id, self.post_type, self.post_id))
-        app.logger.info("comment:%s\n", comment)
+        app.logger.info("comment:%s\n", comment_info)
 
-        praise = comment.get("praise")
-        if praise == 1:
-            # dianzan
-            redis_db.incr(self.post_id)
-        elif praise == -1:
-            redis_db.decr(self.post_id)
+        praise = comment_info.get("praise")
+        if praise:
+            # dianzan, use redis hash, may record friends dianzan, other's only count
+            redis_db.hincrby(POST_KEY + self.post_id, PRAISE_NUM_FIELD, praise)
 
-        mycomment = comment.get('comment')
+        mycomment = comment_info.get('comment')
         if mycomment:
             new_info = dict()
-            new_info['ct'] = mycomment
-            new_info['user_id'] = self.user_id
+            new_info['content'] = mycomment
+            new_info['uid'] = self.user_id
             new_info['time'] = int(time.time())
-            new_info['uuid'] = str(uuid.uuid4())
-            resp = self.collection.update({'_id': self.post_id}, {'$addToSet': {'comment': new_info}})
+            new_info['obj_id'] = ObjectId()
+            resp = self.collection.update({'_id': ObjectId(self.post_id)}, {'$addToSet': {'comment': new_info}})
+            return {'post_id': str(self.post_id), 'comment_id': str(new_info['obj_id'])}
 
         return {'post_id': str(self.post_id)}
 
-    def del_comment(self, my_uuid):
+    def del_comment(self, my_obj_id):
         # check if the post's owner is current user
         app.logger.info("user:%s del comment:%s, %s\n" % (self.user_id, self.post_id, uuid))
         info = dict()
-        info['uuid'] = my_uuid
-        result = self.collection.update({'_id': self.post_id}, {'$pull': {'comment': info}})
+        info['obj_id'] = ObjectId(my_obj_id)
+        result = self.collection.update({'_id': ObjectId(self.post_id)}, {'$pull': {'comment': info}})
 
         return {'post_id': str(self.post_id)}
+
+    def del_activity(self):
+        app.logger.info("user:%s del activity:%s, %s\n" % (self.user_id, self.post_type, self.post_id))
+        # check if the post's owner is current user
+        res = self.collection.remove({'_id': ObjectId(self.post_id), 'uid': self.user_id})
+
+        app.logger.info("del activity result:[%s]\n", res)
+
+        # del redis db
+        redis_db.hdel(POST_KEY + self.post_id, PRAISE_NUM_FIELD)
+
+        return {'post_id': self.post_id}
+
+    def get_sb_activity(self, user_id, limit, offset):
+        app.logger.info("get_sb_activity of %s;limit:%d,%d\n", user_id, limit, offset)
+        result = self.collection.find({'uid': user_id}).sort([("_id", -1)]).skip(offset).limit(limit)
+        posts = []
+        # if result has ObjectId type, then must change type as follow, otherwise will wrong
+        # ret = json.dumps(result, default=json_util.default)
+        # app.logger.info("show user %s" % ret)
+        # return json.loads(ret)
+
+        for loop in result:
+            posts.append(loop)
+
+        ret = dict()
+        ret['posts'] = posts
+        app.logger.info("get_sb_activity of %s;result:[%s]\n", user_id, ret)
+        return ret
+
+    def activity_search(self):
+        pass
+
+
+
+
 
     def track_activity(self, track):
         app.logger.info("user:%s post one comment:%s, %s\n" % (self.user_id, self.post_type, self.post_id))
@@ -111,11 +142,6 @@ class Activity(object):
 
     def share_one_activity(self, share):
         return None
-
-    def activity_search(self):
-        pass
-
-
 
 
     def join_group_ask(self):

@@ -1,9 +1,26 @@
 #!/bin/sh
 
-#test for app
+#test for app api
 
-HOST="http://127.0.0.1:8000/v1"
+HOST='127.0.0.1'
+PORT='8000'
+VER='/1'
+
+USERS='/u'
+ACTIVITY='/ay'
+GROUP='/g'
 num=1
+
+if [ $# -ne 0 ]; then
+    echo $@
+    if [ ! -z "$1" ]; then
+        HOST=$1
+    fi
+    if [ ! -z "$2" ]; then
+        PORT=$2
+    fi
+fi
+URL='http://'$HOST':'$PORT$VER
 
 i=0
 while [ $i -lt $num ]; do
@@ -13,7 +30,7 @@ while [ $i -lt $num ]; do
 	echo "########################"
 	ACCOUT=`date +%s|cut -b '7-11'`
 	#get identify_code
-	identify_code=`curl -i -X GET $HOST/users/register?accout=1388913$ACCOUT 2>/dev/null | grep identify_code |awk -F' ' '{print $2}'`
+	identify_code=`curl -i -X GET $URL/USERS/register?accout=1388913$ACCOUT 2>/dev/null | grep identify_code |awk -F' ' '{print $2}'`
 	echo "identify_code is "$identify_code
 
 	echo ""
@@ -21,7 +38,7 @@ while [ $i -lt $num ]; do
 	echo "######register##########"
 	echo "########################"
 	#register and get token object_id
-	result=`curl -i -X POST -H "Content-Type: application/json" -d '{"accout":"1388913'$ACCOUT'","identify_code":"'$identify_code'","passwd":"'$identify_code'"}' $HOST/users/register 2>/dev/null`
+	result=`curl -i -X POST -H "Content-Type: application/json" -d '{"accout":"1388913'$ACCOUT'","identify_code":"'$identify_code'","passwd":"'$identify_code'"}' $URL/USERS/register 2>/dev/null`
 	TOKEN=`echo $result | awk -F'"' '{print $12}'` && OBJ_ID=`echo $result | awk -F'"' '{print $4}'`
 	echo "result is "$result && echo "token is "$TOKEN  && echo "object_id is "$OBJ_ID && echo "accout is ""1388913'$ACCOUT'"
 
@@ -30,14 +47,14 @@ while [ $i -lt $num ]; do
 	echo "######show user#########"
 	echo "########################"
 	#show user
-	curl -i -X GET $HOST/users/$OBJ_ID?token=$TOKEN
+	curl -i -X GET $URL/$USERS/$OBJ_ID?token=$TOKEN
 	
 	echo ""
 	echo "########################"
 	echo "######logout############"
 	echo "########################"
 	#logout
-	curl -i -X GET $HOST/users/logout/$OBJ_ID?token=$TOKEN
+	curl -i -X GET $URL/$USERS/logout/$OBJ_ID?token=$TOKEN
 
 	echo ""
 	echo "########################"
@@ -45,14 +62,14 @@ while [ $i -lt $num ]; do
 	echo "########################"
 	#login and get token object_id
 	#fangzhi duoci denglu bug
-	TOKEN=`curl -i -X POST -H "Content-Type: application/json" -d '{"accout":"1388913'$ACCOUT'","passwd":"'$identify_code'"}' $HOST/users/login 2>/dev/null | grep 'token' |awk -F':' '{print $2}' |awk -F'"' '{print $2}'`
+	TOKEN=`curl -i -X POST -H "Content-Type: application/json" -d '{"accout":"1388913'$ACCOUT'","passwd":"'$identify_code'"}' $URL/$USERS/login 2>/dev/null | grep 'token' |awk -F':' '{print $2}' |awk -F'"' '{print $2}'`
 
 	echo ""
 	echo "########################"
 	echo "######show user#########"
 	echo "########################"
 	#show user
-	curl -i -X GET $HOST/users/$OBJ_ID?token=$TOKEN
+	curl -i -X GET $URL/$USERS/$OBJ_ID?token=$TOKEN
 
 	echo ""
 	echo "########################"
@@ -79,7 +96,8 @@ while [ $i -lt $num ]; do
 	curl -i -X GET $HOST/$TYPE/$POST_ID?token=$TOKEN
 
     #upload file
-    #curl -i -X POST -F "action=upload" -F "file=@/tmp/test.png" $HOST/users/upload?token=$TOKEN
+    #curl -i -X POST -F "action=upload" -F "file=@/tmp/test.png" $URL/upload?token=$TOKEN
 
 	i=`expr $i + 1`
+
 done

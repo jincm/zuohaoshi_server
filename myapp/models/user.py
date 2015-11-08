@@ -5,6 +5,7 @@
     Good man is well
 """
 import random
+import time
 import os
 import sys
 import datetime
@@ -25,6 +26,9 @@ user_db = user_db_client.zuohaoshi
 user_collection = user_db.user_collection
 # user_db.user_collection.create_index("_id")
 
+if redis_db.get(CURRENT_USER_ID) is None:
+    redis_db.set(CURRENT_USER_ID, '10000')
+
 im_obj = EasemobIM(app.logger)
 
 # These keys are intentionally short, so as to save on memory in redis
@@ -33,6 +37,8 @@ FOLLOWS_KEY = 'F'
 FOLLOWERS_KEY = 'f'
 BLOCKS_KEY = 'B'
 BLOCKED_KEY = 'b'
+
+USERID_KEY = 'U'
 
 class User(object):
 
@@ -72,12 +78,14 @@ class User(object):
 
     def show_user(self):
         app.logger.info("show user %s" % self.user_id)
-        result = user_collection.find_one({'_id': int(self.user_id)})  # ObjectId(self.user_id)})
-        try:
-            del result['passwd_hash']
-        except Exception, e:
-            app.logger.error("del key passwd_hash error:%s", e)
+        result = user_collection.find_one({'_id': self.user_id})  # ObjectId(self.user_id)})
+        if result:
+            try:
+                del result['passwd_hash']
+            except Exception, e:
+                app.logger.error("del key passwd_hash error:%s", e)
 
+        # app.logger.info("show user %s" % result)
         # if result has ObjectId type, then must change type as follow, otherwise will wrong
         # ret = json.dumps(result, default=json_util.default)
         # app.logger.info("show user %s" % ret)
@@ -95,18 +103,37 @@ class User(object):
             return None    # valid token, but expired
         except BadSignature:
             return None    # invalid token
+        except:
+            return None
 
-        user_id = data['object_id']
+        user_id = data['user_id']
         user = User(user_id)
+
+        # users last online time, may be update redis not mongodb
+        mytime = int(time.time())
+        infos = dict()
+        infos['last_update'] = mytime
+        user.modify_user(infos, update='modify')
+
         app.logger.info("get user from token:%s %s\n" % (token, user.user_id))
         return user
 
     @classmethod
     def add_user(cls, account=None, passwd=None):
         app.logger.info("add user start:[%s,%s]" % (account, passwd))
+        # check if account has register
+        result_find = user_collection.find_one({'account': account})
+        if result_find:
+            db_passwd_hash = result_find.get('passwd_hash')
+            user_id = result_find.get('_id')
+            s = Serializer(app.config['SECRET_KEY'], expires_in=6000)  # 3600000=41 days
+            token = s.dumps({'user_id': '%s' % user_id, 'passwd': db_passwd_hash})
+            app.logger.info("user exsit [account:%s]:[user_id:%s]:[%s]\n" % (account, user_id, token))
+            return token, str(user_id)
+
         # generate token
+        user_id = str(redis_db.incr(CURRENT_USER_ID))
         s = Serializer(app.config['SECRET_KEY'], expires_in=6000)  # 3600000=41 days
-        user_id = redis_db.incr(CURRENT_USER_ID)
         token = s.dumps({'user_id': '%s' % user_id, 'passwd': passwd})
 
         # save account/passwd to mongodb
@@ -120,7 +147,7 @@ class User(object):
         # save user to easemob platform
         im_obj.register_user(user_id, user_id)
 
-        app.logger.info("add user [%s:%s:%s:%s,%d]" % (account, passwd_hash, token, user_obj_id, user_id))
+        app.logger.info("add user [%s]:[%s]:[%s]:%s]" % (account, passwd_hash, token, user_id))
         return token, str(user_id)
 
     @classmethod
@@ -138,7 +165,7 @@ class User(object):
             redis_db.set(account, identify_code)
             redis_db.expire(account, 600)
 
-            return {'identify_code': identify_code}
+            return {'identify_code': str(identify_code)}
         else:
             # get identify_code from redis {account:identify_code}
             saved_identify_code = redis_db.get(account)
@@ -149,7 +176,7 @@ class User(object):
 
                 app.logger.info("Identify success for account %s" % account)
                 token, user_obj_id = cls.add_user(account, passwd)
-                return {"register": account, "token": token, "object_id": user_obj_id}
+                return {"account": account, "token": token, "user_id": user_obj_id}
             else:
                 app.logger.info("Identify error:%s,code:%s,saved:%s" % (account, identify_code, saved_identify_code))
                 return {'error': 'Identify code not match'}
@@ -195,7 +222,7 @@ class User(object):
             redis_db.set(str(object_id), token)
 
             app.logger.info("Login success:[%s:%s:%s]" % (account, object_id, token))
-            return {"login": account, "token": token, "object_id": str(object_id)}
+            return {"login": account, "token": token, "user_id": str(object_id)}
 
     def logout(self):
             app.logger.info("Login failed:[%s]" % self.user_id)
@@ -207,18 +234,26 @@ class User(object):
     def modify_user(self, info, update='modify'):
         app.logger.info("save user's new info to db:[%s]" % info)
         if update == 'modify':
+            """
             for one in info:
                 new_info = {one: info[one]}
                 if one in ['post', 'friends', 'follower', 'followee']:
                     # result = user_db.user_collection.update({'_id': self.user_id}, {'$addToSet': info})
                     result = user_db.user_collection.update({'_id': self.user_id}, {'$push': new_info})
-                else:
-                    result = user_db.user_collection.update({'_id': self.user_id}, {'$set': new_info})
+            """
+            token = info.get("token")
+            if token:
+                try:
+                    del info["token"]
+                except Exception, e:
+                    app.logger.error("del key error:%s", e)
+
+            result = user_db.user_collection.update({'_id': self.user_id}, {'$set': info})
         elif update == 'delete':
             new_info = info
             result = user_db.user_collection.update({'_id': self.user_id}, {'$pull': new_info})
 
-        if result.get('nModified') != 1:
+        if result.get('ok') != 1:
             app.logger.error("result is %s" % result)
             return result
 

@@ -6,6 +6,8 @@
 import os
 import time
 
+from bson import ObjectId, json_util
+
 from flask import Blueprint, request, abort, jsonify
 from flask.ext.login import login_required, current_user
 from werkzeug.utils import secure_filename
@@ -23,53 +25,76 @@ activity_blueprint = Blueprint('activity', __name__, url_prefix='/1/ay')  # acti
 def post_activity(post_type):
     app.logger.info("request:[%s],[%s],[%s]\n" % (request.headers, request.args, request.json))
     app.logger.info("type:%s,current_user:%s\n" % (post_type, current_user.user_id))
-    token = request.args.get("token")
-    info = request.json
-    if token is None or info is None:
-        app.logger.error("missing parameters:%s,%s" % (token, info))
+    post_data = request.json
+    if post_data is None:
+        app.logger.error("missing parameters:%s" % post_data)
         abort(400)
 
-    # if it has files, save them into aliyun, and make the url
-    f = request.files['file']
-    fname = secure_filename(f.filename)
-    localfile = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-    app.logger.info("start upload file to store:%s,%s" % (fname, localfile))
-    f.save(localfile)
-    res = upload_file_to_store('zuohaoshi/2015/beijing', fname, localfile)
-    app.logger.info("end upload file to store:%s,%s" % (res.status, res.read()))
-
     # post activity
-    ret = Activity.post_activity(current_user.user_id, post_type, info)
+    if "token" in post_data:
+        try:
+            del post_data["token"]
+        except Exception, e:
+            app.logger.error("del key error:%s", e)
+
+    if 'uid' not in post_data:
+        post_data['uid'] = current_user.user_id
+
+    ret = Activity.post_activity(current_user.user_id, post_type, post_data, post_id=None)
 
     app.logger.info("post activity ret [%s]\n" % ret)
     return jsonify(ret)
 
 
-@activity_blueprint.route("/<user_id>/posts", methods=['GET'])
+@activity_blueprint.route("/<post_type>/<post_id>/upload_imgs", methods=["POST"])
 @login_required
-def get_sb_activities(user_id):
-    app.logger.info("request:[%s],[%s],[%s]\n" % (request.headers, request.args, user_id))
+def post_activity_upload_imgs(post_type, post_id):
+    app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
+    app.logger.info("current_user :%s" % current_user.user_id)
+    app.logger.info("start upload file")
 
-    limit = request.args.get("limit")
-    offset = request.args.get("offset")
-    if not limit:
-        limit = 10
-    if not offset:
-        offset = 0
+    # upload new head portrait to store and update post's url
+    app.logger.info("files :%s" % request.files)
+    if request.files is None:
+        app.logger.error("missing something:file key is lost")
+        abort(400)
 
-    # activities = User(user_id).get_sb_activities()
-    user = User(user_id)
-    user_info = user.show_user()
+    img_info = dict()
+    img_urls = []
+    for one_file in request.files:
+        post_file = request.files.get(one_file)
 
-    activities = user_info
+        # get file and save it to local tmp
+        fname = secure_filename(post_file.filename)
+        ext_name = fname.split('.')[-1]
+        obj_id = str(ObjectId())
+        pic_name = '%s.%s' % (obj_id, ext_name)
 
-    app.logger.info("get_sb_activities:%s" % activities)
-    for one in activities:
-        activity = Activity(post_id, current_user.user_id)
-        ret = activity.get_one_activity()
+        localfile = os.path.join(app.config['UPLOAD_FOLDER'], pic_name)
+        app.logger.info("start upload file to local store:[%s],[%s]" % (pic_name, localfile))
+        post_file.save(localfile)
 
-    app.logger.info("get_sb_activities:%s" % ret)
-    return jsonify(ret)
+        # upload file to oss
+        pic_url = 'zuohaoshi/%s/%s' % (post_type, post_id)
+
+        file_url = upload_file_to_store(pic_url, pic_name, localfile)
+        if file_url is None:
+            app.logger.error("file upload failed")
+            abort(400)
+
+        app.logger.info("end upload file to store:%s\n" % file_url)
+        # delete local tmp file
+        os.remove(localfile)
+
+        img_urls.append(file_url)
+
+    if img_urls:
+        # update post's info
+        img_info['img_urls'] = img_urls
+        ret = Activity.post_activity(current_user.user_id, post_type, img_info, post_id)
+        app.logger.info("modify post image %s:[%s]\n" % (post_id, ret))
+        return jsonify(ret)
+
 
 
 @activity_blueprint.route("/<post_type>/<post_id>", methods=['GET'])
@@ -84,18 +109,6 @@ def get_activity(post_type, post_id):
 
     return jsonify(ret)
 
-@activity_blueprint.route("/<post_type>/<post_id>", methods=['DELETE'])
-@login_required
-def del_activity(post_type, post_id):
-    app.logger.info("request:[%s],[%s],[%s]\n" % (request.headers, request.args, request.json))
-    app.logger.info("type:[%s,%s],current_user:%s\n" % (post_type, post_id, current_user.user_id))
-
-    activity = Activity(current_user.user_id, post_type, post_id)
-    ret = activity.del_activity()
-    app.logger.info("get_activity:%s" % ret)
-    return jsonify(ret)
-
-
 # comment or praise
 @activity_blueprint.route("/<post_type>/<post_id>/comment", methods=["POST"])
 @login_required
@@ -103,9 +116,9 @@ def post_activity_comment(post_type, post_id):
     app.logger.info("request:[%s],[%s],[%s]\n" % (request.headers, request.args, request.json))
     app.logger.info("type:[%s,%s],current_user:%s\n" % (post_type, post_id, current_user.user_id))
 
-    comment = request.json.get("comment")
+    comment = request.json
     if comment is None:
-        app.logger.error("missing parameters content:%s" % comment)
+        app.logger.error("missing parameters content:%s" % post_id)
         abort(400)
 
     activity = Activity(current_user.user_id, post_type, post_id)
@@ -124,6 +137,55 @@ def del_activity_comment(post_type, post_id, comment_id):
     ret = activity.del_comment(comment_id)
     app.logger.info("post_activity_comment:%s" % ret)
     return jsonify(ret)
+
+
+@activity_blueprint.route("/<post_type>/<post_id>", methods=['DELETE'])
+@login_required
+def del_activity(post_type, post_id):
+    app.logger.info("request:[%s],[%s],[%s]\n" % (request.headers, request.args, request.json))
+    app.logger.info("type:[%s,%s],current_user:%s\n" % (post_type, post_id, current_user.user_id))
+
+    activity = Activity(current_user.user_id, post_type, post_id)
+    ret = activity.del_activity()
+    app.logger.info("get_activity:%s" % ret)
+    return jsonify(ret)
+
+@activity_blueprint.route("/<user_id>/<post_type>/posts", methods=['GET'])
+@login_required
+def get_sb_activities(user_id, post_type):
+    app.logger.info("request:[%s],[%s],[%s]\n" % (request.headers, request.args, request.json))
+    app.logger.info("type:[%s]user:[%s],current_user:%s\n" % (post_type, user_id, current_user.user_id))
+
+    limit = request.args.get("limit")
+    offset = request.args.get("offset")
+    if not limit:
+        limit = 50
+    if not offset:
+        offset = 0
+
+    activity = Activity(current_user.user_id, post_type)
+    ret = activity.get_sb_activity(user_id, int(offset), int(limit))
+    ret_json = jsonify(ret)
+    app.logger.info("get_sb_activities:%s" % ret)
+    return ret_json
+
+
+@activity_blueprint.route("/<post_type>/search", methods=['POST'])
+@login_required
+def search_activity(post_type):
+    app.logger.info("request:[%s],[%s],[%s]\n" % (request.headers, request.args, request.json))
+    app.logger.info("type:[%s],current_user:%s\n" % (post_type, current_user.user_id))
+    search = request.json.get("search")
+    if search is None:
+        app.logger.error("missing parameters track:%s" % search)
+        abort(400)
+
+    activity = Activity(current_user.user_id, post_type)
+    ret = activity.activity_search(search)
+    app.logger.info("search_activity:%s" % ret)
+    return jsonify(ret)
+
+
 
 
 @activity_blueprint.route("/<post_type>/<post_id>/track", methods=['POST'])
@@ -154,18 +216,5 @@ def share_activity(post_type, post_id):
     return jsonify(ret)
 
 
-@activity_blueprint.route("/<post_type>/search", methods=['POST'])
-@login_required
-def search_activity(post_type):
-    app.logger.info("request:[%s],[%s],[%s]\n" % (request.headers, request.args, request.json))
-    app.logger.info("type:[%s],current_user:%s\n" % (post_type, current_user.user_id))
-    search = request.json.get("search")
-    if search is None:
-        app.logger.error("missing parameters track:%s" % search)
-        abort(400)
 
-    activity = Activity(current_user.user_id, post_type)
-    ret = activity.activity_search(search)
-    app.logger.info("search_activity:%s" % ret)
-    return jsonify(ret)
 

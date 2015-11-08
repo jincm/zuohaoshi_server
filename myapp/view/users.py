@@ -8,6 +8,8 @@
 import os
 import datetime
 
+from bson import ObjectId
+
 # flask and other third party package
 from flask import Blueprint, request, abort, url_for, jsonify
 from flask.ext.login import login_required, current_user
@@ -58,7 +60,6 @@ def register_user():
 @users_blueprint.route('/login', methods=['POST'])
 def user_login():
     app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
-    app.logger.info("current_user :%s" % current_user.user_id)
 
     account = request.json.get('account')
     password = request.json.get('passwd')
@@ -113,40 +114,69 @@ def del_user():
 
 # save file to oss
 ALLOWED_EXTENSIONS = set(['txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'])
-@users_blueprint.route('/upload', methods=['POST'])
+@users_blueprint.route('/<user_id>/upload_head', methods=['POST'])
 @login_required
-def user_upload_file():
+def user_upload_head_img(user_id):
+    app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
+    app.logger.info("current_user :%s" % current_user.user_id)
     app.logger.info("start upload file")
-    f = request.files['file']
-    fname = secure_filename(f.filename)
-    localfile = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-    app.logger.info("start upload file to store:%s,%s" % (fname, localfile))
 
-    f.save(localfile)
-    res = upload_file_to_store('zuohaoshi/2015/beijing', fname, localfile)
-    app.logger.info("end upload file to store:%s,%s" % (res.status, res.read()))
-    return jsonify({'file': fname})
+    if current_user.user_id != user_id:
+        app.logger.warn("user not assist:%s,%s\n", current_user.user_id, user_id)
+        abort(401)
+
+    # upload new head portrait to store and update info's url
+    post_file = request.files.get('file1')
+    app.logger.info("files :%s" % request.files)
+    if post_file:
+        # get file and save it to local tmp
+        fname = secure_filename(post_file.filename)
+        ext_name = fname.split('.')[-1]
+        obj_id = str(ObjectId())
+        pic_name = '%s.%s' % (obj_id, ext_name)
+
+        localfile = os.path.join(app.config['UPLOAD_FOLDER'], pic_name)
+        app.logger.info("start upload file to local store:[%s],[%s]" % (fname, localfile))
+        post_file.save(localfile)
+
+        # upload file to oss
+        pic_url = 'zuohaoshi/%s' % current_user.user_id
+        # pic_name = '%s' % fname  # current_user.user_id + ext_name
+        file_url = upload_file_to_store(pic_url, pic_name, localfile)
+        if file_url is None:
+            app.logger.error("file upload failed")
+            abort(400)
+
+        app.logger.info("end upload file to store:%s\n" % file_url)
+
+        # update user's portrait info
+        img_info = dict()
+        img_info['head_img'] = '%s' % file_url
+
+        # delete local tmp file
+        os.remove(localfile)
+
+        user = User(current_user.user_id)
+        ret = user.modify_user(img_info)
+        ret_json = jsonify(dict(ret, **img_info))
+        app.logger.info("modify user head image %s:[%s,%s]\n" % (current_user.user_id, ret, img_info))
+        return ret_json
+    else:
+        app.logger.error("missing something:file key is lost")
+        abort(400)
 
 
 ########################
 # #######user edit######
 ########################
-@users_blueprint.route('/mf_user', methods=["POST"])
+@users_blueprint.route('/modify_user', methods=["POST"])
 @login_required
 def modify_user():
-    app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
+    app.logger.info("modify_user req:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
     app.logger.info("current_user :%s" % current_user.user_id)
 
     user = User(current_user.user_id)
     info = request.json
-
-    files = request.files['file']
-    if files:
-        # upload new head portrait to store and update info's url
-        app.logger.info("update user's portrait")
-        pic_url = '%s/' % current_user.user_id
-        info = info + {'head_pic': pic_url}
-        # user.modify_user(info)
 
     if info is None:
         app.logger.error("missing something:info key is lost")
@@ -155,11 +185,11 @@ def modify_user():
     ret = user.modify_user(info)
 
     ret_json = jsonify(ret)
-    app.logger.info("modify_user %s:[%s]" % (current_user.user_id, ret_json))
+    app.logger.info("modify_user %s:[%s]" % (current_user.user_id, ret))
     return ret_json
 
 
-@users_blueprint.route('/<user_id>', methods=["GET"])
+@users_blueprint.route('/users/<user_id>', methods=["GET"])
 @login_required
 def show_user(user_id):
     app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
@@ -169,11 +199,11 @@ def show_user(user_id):
     ret = user.show_user()
 
     ret_json = jsonify(ret)
-    app.logger.info("show_user %s:[%s]" % (user_id, ret_json))
+    app.logger.info("show_user %s:[%s]" % (user_id, ret))
     return ret_json
 
 
-@users_blueprint.route('/nb', methods=["POST"])
+@users_blueprint.route('/nearby_users', methods=["POST"])
 @login_required
 def nearby_users():
     app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
@@ -188,7 +218,7 @@ def nearby_users():
     ret = user.person_nearby(request.json)
 
     ret_json = jsonify(ret)
-    app.logger.info("nearby_users %s:[%s]" % (current_user.user_id, ret_json))
+    app.logger.info("nearby_users %s:[%s]" % (current_user.user_id, ret))
     return ret_json
 
 

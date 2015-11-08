@@ -58,6 +58,16 @@ sudo cp nginx_default /etc/nginx/sites-enabled/default
 sudo cp supervisor.conf /etc/supervisor/conf.d/supervisor.conf
 sudo service nginx restart
 
+###Important!!!!!!!!!!!!!!!!!!!!
+###patched to flask/json.py for jsonify(ObjectId)
+vi /usr/local/lib/python2.7/dist-packages/flask/json.py
+# added by jincm for bug
+++from bson import ObjectId
+        # added by jincm for jsonify ObjectId
+        ++if isinstance(o, ObjectId):
+           ++return str(0)
+        if isinstance(o, datetime):
+            return http_date(o)
 
 ### Run
 test can use

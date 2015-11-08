@@ -1,7 +1,6 @@
 # coding = "utf-8"
 
 """
-    zuohaoshi db
     Good man is well
 """
 import time
@@ -138,7 +137,8 @@ class FacePPSearch(FaceSearch):
             payload['api_secret'] = facepp_api_secret
             payload['url'] = imgurl
             payload['tag'] = tag
-            # http://apicn.faceplusplus.com/v2/detection/detect?api_key=58d296e0f2c54f238edfa1556201807b&api_secret=4eAtNRcN0Vnj8rA5dVa0XAdFGK0YdxWL&url=http%3A%2F%2Ffaceplusplus.com%2Fstatic%2Fimg%2Fdemo%2F1.jpg&attribute=glass,pose,gender,age,race,smiling
+            # http://apicn.faceplusplus.com/v2/detection/detect?api_key=58d296e0f2c54f238edfa1556201807b&
+            # api_secret=4eAtNRcN0Vnj8rA5dVa0XAdFGK0YdxWL&url=http%3A%2F%2Ffaceplusplus.com%2Fstatic%2Fimg%2Fdemo%2F1.jpg&attribute=glass,pose,gender,age,race,smiling
             resp = requests.get(url, params=payload)
 
             self.logger.info("_detection_detecting...:[%d][%s]\n", resp.status_code, payload)
