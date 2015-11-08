@@ -125,8 +125,28 @@ class Activity(object):
         app.logger.info("get_sb_activity of %s;result:[%s]\n", user_id, ret)
         return ret
 
-    def activity_search(self):
-        pass
+    def activity_search(self, args, fields, offset, limit):
+        app.logger.info("person_nearby:[%s,%s,%s,%s]\n" % (args, fields, offset, limit))
+        result = self.collection.ensureIndex({"loc": "2d", "_id": 1}, {"background": "true"})
+        condition = dict()
+        loc = args.get('loc')
+        if loc is None:
+            find_result = self.collection.find().sort([("_id", -1)]).skip(offset).limit(limit)
+        else:
+            del args['loc']
+            condition['loc'] = {'$near': loc}
+            new_cond = dict(condition, **args)
+            find_result = self.collection.find({'loc': {'$near': [11, 12]}}).skip(offset).limit(limit)
+
+        # db.runCommand( { geoNear : "user_collection" , near : [50,50], num : 10 , query:{"age" : 233} });
+        result = []
+        # maybe only append some meta data, filter with fields
+        for one in find_result:
+            app.logger.info("activity find result [%s]\n" % one)
+            result.append(one)
+
+        app.logger.info("activity_search [%s]\n" % result)
+        return {'posts': result}
 
 
 

@@ -7,7 +7,7 @@ user_db_client = MongoClient(app.config['MONGODB_DATABASE'])  # ("mongodb://loca
 activity_db_client = user_db_client
 group_db_client = user_db_client
 
-user_db_client.zuohaoshi.user_collection.create_index([('loc', "2d"), ('sex', 1)])
+# user_db_client.zuohaoshi.user_collection.create_index([('loc', "2d"), ('sex', 1)])
 
 redis_db = redis.Redis(app.config['REDIS_DB_HOST'], app.config['REDIS_DB_PORT'])
 # activity_redis_client = user_redis_client

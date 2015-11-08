@@ -16,6 +16,8 @@ from passlib.apps import custom_app_context as pwd_context
 from itsdangerous import (TimedJSONWebSignatureSerializer
                           as Serializer, BadSignature, SignatureExpired)
 
+import pymongo
+
 from myapp.models import user_db_client
 from myapp.models import redis_db, CURRENT_USER_ID
 from myapp.ext.short_message import send_short_message
@@ -46,6 +48,7 @@ class User(object):
         app.logger.info("user instance %s init" % user_id)
         self.user_id = user_id
 
+        """
         self.score = 0
         self.phone = None
         self.friends = set()
@@ -54,6 +57,7 @@ class User(object):
         self.type = 0  # user/shangjia/qiye/aixinshe/jijinhui
         self.head_pic = ''
         self.notes = ''
+        """
 
     def __repr__(self):
         return '<User %r>' % (self.user_id)
@@ -260,26 +264,38 @@ class User(object):
         app.logger.info("modify_user [%s:%s]" % (self.user_id, result))
         return {'modifyok': self.user_id}
 
-    def person_nearby(self, info):
-        app.logger.info("person_nearby:[%s]" % info)
-        loc = info['loc']
-        sex = info['sex']
-        if loc is None or sex is None:
-            app.logger.error("key loc or sex is lost")
-            return None
+    @classmethod
+    def users_search(cls, args, fields, offset, limit):
+        app.logger.info("person_nearby:[%s,%s,%s,%s]\n" % (args, fields, offset, limit))
+        # may be first create index
+        result = user_db.user_collection.ensure_index([("loc", pymongo.GEO2D), ("sex", 1)])
 
-        # result = user_db.user_collection.find({'loc': {'$near': [50, 50]}, 'age': 20, "lastime": 2015})
-        find_result = user_db.user_collection.find({'loc': {'$near': loc}, 'sex': sex}).limit(20)
+        condition = dict()
+        loc_x = int(args.get('loc_x'))
+        loc_y = int(args.get('loc_y'))
+        loc = []
+        loc.append(loc_x)
+        loc.append(loc_y)
+        app.logger.info("loc:[%s]\n" % loc)
+        if loc is None:
+            find_result = user_db.user_collection.find(args).skip(offset).limit(limit)
+        else:
+            # del args['loc']
+            condition['loc'] = {'$near': loc}
+            new_cond = dict(condition, **args)
+            find_result = user_db.user_collection.find(condition).skip(offset).limit(limit)
+
         # db.runCommand( { geoNear : "user_collection" , near : [50,50], num : 10 , query:{"age" : 233} });
         result = []
-        # maybe only append some meta data
+        # maybe only append some meta data, filter with fields
         for one in find_result:
+            app.logger.info("users find result [%s]\n" % one)
             if 'passwd_hash' in one:
                 del one['passwd_hash']
             result.append(one)
 
-        app.logger.info("person_nearby [%s:%s]" % (self.user_id, result))
-        return {'nearby': result}
+        app.logger.info("users_search [%s]\n" % result)
+        return {'users': result}
 
     def add_friend_ask(self, friend_id, msg=None):
         app.logger.info("add_friend_ask:[%s]" % friend_id)

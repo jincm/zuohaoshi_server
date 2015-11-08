@@ -68,8 +68,8 @@ def myrequest(url, method, headers=None, params=None, payload=None, files=None):
         print "%s ERROR except:%s?header:%s?%s,%s" % (method, url, headers, params, payload)
         return None
 
-# sudo kill -9 `pidof uwsgi`
-# sudo /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
+# kill -9 `pidof uwsgi` && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
+# python zuohaoshi/server/test/test_user.py 192.168.3.12 80
 ##################################################################################
 #######################Test#######################################################
 ##################################################################################
@@ -163,30 +163,43 @@ if __name__ == '__main__':
                              my_url, payload, my_headers, resp.status_code, resp.json())
                 exit(1)
 
-        # #####show user#########
-        try:
-            my_url = URL + USERS + "/users/" + user_id
-            payload = dict()
-            payload['token'] = token
-            print "GET:%s?%s" % (my_url, payload)
+        # #####user info modify#########
+        my_url = URL + USERS + "/modify_user"
+        my_headers = dict()
+        my_headers['content-type'] = 'application/json'
+        my_headers['token'] = token
 
-            resp = requests.get(my_url, params=payload)
-            logger.info("GET:%s?%s,response:%s\n", my_url, payload, resp.json())
-        except Exception, e:
-            logger.error("GET ERROR:%s?%s,error:%s\n", my_url, payload, e)
-            exit(1)
-        else:
-            print 'resp:%s\n' % resp.text
-            if resp.status_code == 200:
-                logger.info("GET OK:%s?%s,response:%s\n", my_url, payload, resp.json())
-                check_key = resp.json().get('account')
-                if check_key is None:
-                    logger.error("GET ERROR:%s?%s,response:%s\n", my_url, payload, resp.json())
-                    exit(1)
-            else:
-                logger.error("GET ERROR:%s?%s,response:%s\n", my_url, payload, resp.text)
+        payload = dict()
+        x = random.randint(1, 99)
+        y = random.randint(1, 99)
+        payload['user_name'] = 'jincm'
+        payload['age'] = x + y
+        payload['sex'] = 'm'
+        payload['www'] = 'wwm'
+        payload['loc'] = [x, y]
+        ret = myrequest(my_url, "POST", payload=payload, headers=my_headers)
+        if ret:
+            check_key = ret.get('modifyok')
+            if check_key is None:
+                print "POST ERROR:resp error:%s\n" % ret
                 exit(1)
+        else:
+            exit(1)
 
+        # #####show user#########
+        my_url = URL + USERS + "/users/" + user_id
+        params = dict()
+        params['token'] = token
+        ret = myrequest(my_url, "GET", params=params)
+        if ret:
+            check_key = ret.get('account')
+            if check_key is None:
+                print "GET ERROR:%s?params:%s,resp:%s\n" % (my_url, params, ret)
+                exit(1)
+        else:
+            exit(1)
+
+        """
         # #####user logout#########
         try:
             my_url = URL + USERS + "/logout/" + user_id
@@ -210,158 +223,119 @@ if __name__ == '__main__':
             else:
                 logger.error("GET ERROR:%s?%s,response:%s\n", my_url, payload, resp.text)
                 exit(1)
+        """
 
         # #####user delete by self or admin, not test now#########
 
+    """
     # register one test account by admin, may login first?
-    try:
-        my_url = URL + ADMIN + "/add_user"
-        my_headers = dict()
-        my_headers['content-type'] = 'application/json'
-        my_headers['token'] = 'this token is false'
-        payload = dict()
-        payload['account'] = '123456789'
-        payload['passwd'] = '123456'
-        # payload['token'] = 'this token is false'
-        print "POST:%s?%s" % (my_url, payload)
-
-        resp = requests.post(my_url, data=json.dumps(payload), headers=my_headers)
-        logger.info("POST:%s?%s,response:%s\n", my_url, payload, resp.json())
-    except Exception, e:
-        logger.error("POST ERROR:%s?%s,error:%s\n", my_url, payload, e)
-        exit(1)
-    else:
-        print 'resp:%s\n' % resp.text
-        if resp.status_code == 200:
-            logger.info("POST OK:%s?%s,head:%s,resp:%s\n", my_url, payload, my_headers, resp.json())
-            user_id = resp.json().get('user_id')
-            if user_id is None:
-                logger.error("POST ERROR:%s?%s,head:%s,resp:%s\n", my_url, payload, my_headers, resp.json())
-                exit(1)
-        else:
-            logger.error("POST STATUS ERROR:%s?%s,head:%s,status:%d, resp:%s\n",
-                         my_url, payload, my_headers, resp.status_code, resp.json())
+    my_url = URL + ADMIN + "/add_user"
+    my_headers = dict()
+    my_headers['content-type'] = 'application/json'
+    my_headers['token'] = 'this token is false'
+    payload = dict()
+    payload['account'] = '123456789'
+    payload['passwd'] = '123456'
+    ret = myrequest(my_url, "POST", payload=payload,headers=my_headers)
+    if ret:
+        user_id = ret.get('user_id')
+        if user_id is None:
+            print "POST ERROR:resp error:%s\n" % ret
             exit(1)
+    else:
+        exit(1)
 
     # #####user login#########
-    try:
-        my_url = URL + USERS + "/login"
-        my_headers = {'content-type': 'application/json'}
-        payload = dict()
-        payload['account'] = '123456789'
-        payload['passwd'] = '123456'
-        print "POST:%s?%s" % (my_url, payload)
-
-        resp = requests.post(my_url, data=json.dumps(payload), headers=my_headers)
-        logger.info("POST:%s?%s,response:%s\n", my_url, payload, resp.json())
-    except Exception, e:
-        logger.error("POST ERROR:%s?%s,error:%s\n", my_url, payload, e)
-        exit(1)
-    else:
-        print 'resp:%s\n' % resp.text
-        if resp.status_code == 200:
-            logger.info("POST OK:%s?%s,head:%s,resp:%s\n", my_url, payload, my_headers, resp.json())
-            check_key = resp.json().get('user_id')
-            new_token = resp.json().get('token')
-            if check_key is None:
-                logger.error("POST ERROR:%s?%s,head:%s,resp:%s\n", my_url, payload, my_headers, resp.json())
-                exit(1)
-        else:
-            logger.error("POST STATUS ERROR:%s?%s,head:%s,status:%d, resp:%s\n",
-                         my_url, payload, my_headers, resp.status_code, resp.json())
+    my_url = URL + USERS + "/login"
+    my_headers = {'content-type': 'application/json'}
+    payload = dict()
+    payload['account'] = '123456789'
+    payload['passwd'] = '123456'
+    ret = myrequest(my_url, "POST", payload=payload,headers=my_headers)
+    if ret:
+        check_key = ret.get('user_id')
+        new_token = ret.get('token')
+        if check_key is None:
+            print "POST ERROR:resp error:%s\n" % ret
             exit(1)
+    else:
+        exit(1)
 
     # #####show user#########
-    try:
-        my_url = URL + USERS + "/users/" + user_id
-        rand_num = '123456789'
-        payload = dict()
-        payload['token'] = new_token
-        print "GET:%s?%s" % (my_url, payload)
-
-        resp = requests.get(my_url, params=payload)
-        # logger.info("GET:%s?%s,response:%s\n", my_url, payload, resp.json())
-    except Exception, e:
-        logger.error("GET ERROR:%s?%s,error:%s\n", my_url, payload, e)
-        exit(1)
-    else:
-        print 'resp:%s\n' % resp.text
-        if resp.status_code == 200:
-            logger.info("GET OK:%s?%s,response:%s\n", my_url, payload, resp.json())
-            check_key = resp.json().get('account')
-            if check_key is None:
-                logger.error("GET ERROR:%s?%s,response:%s\n", my_url, payload, resp.json())
-                exit(1)
-        else:
-            logger.error("GET ERROR:%s?%s,response:%s\n", my_url, payload, resp.text)
+    my_url = URL + USERS + "/users/" + user_id
+    rand_num = '123456789'
+    params = dict()
+    params['token'] = new_token
+    ret = myrequest(my_url, "GET", params=params)
+    if ret:
+        check_key = ret.get('account')
+        if check_key is None:
+            print "GET ERROR:%s?params:%s,resp:%s\n" % (my_url, params, ret)
             exit(1)
+    else:
+        exit(1)
 
     # #####user info modify#########
-    try:
-        my_url = URL + USERS + "/modify_user"
-        my_headers = dict()
-        my_headers['content-type'] = 'application/json'
-        my_headers['token'] = new_token
+    my_url = URL + USERS + "/modify_user"
+    my_headers = dict()
+    my_headers['content-type'] = 'application/json'
+    my_headers['token'] = new_token
 
-        payload = dict()
-        payload['user_name'] = 'jincm'
-        payload['age'] = '78'
-        payload['sex'] = 'm'
-        payload['www'] = 'wwm'
-        print "POST:%s?%s" % (my_url, payload)
-
-        resp = requests.post(my_url, data=json.dumps(payload), headers=my_headers)
-        # logger.info("POST:%s?%s,response:%s\n", my_url, payload, resp.json())
-    except Exception, e:
-        logger.error("POST ERROR:%s?%s,error:%s\n", my_url, payload, e)
-        exit(1)
-    else:
-        print 'resp:%s\n' % resp.text
-        if resp.status_code == 200:
-            logger.info("POST OK:%s?%s,head:%s,resp:%s\n", my_url, payload, my_headers, resp.json())
-            check_key = resp.json().get('modifyok')
-            if check_key is None:
-                logger.error("POST ERROR:%s?%s,head:%s,resp:%s\n", my_url, payload, my_headers, resp.json())
-                exit(1)
-        else:
-            logger.error("POST STATUS ERROR:%s?%s,head:%s,status:%d, resp:%s\n",
-                         my_url, payload, my_headers, resp.status_code, resp.json())
+    payload = dict()
+    payload['user_name'] = 'jincm'
+    payload['age'] = '78'
+    payload['sex'] = 'm'
+    payload['www'] = 'wwm'
+    ret = myrequest(my_url, "POST", payload=payload,headers=my_headers)
+    if ret:
+        check_key = ret.get('modifyok')
+        if check_key is None:
+            print "POST ERROR:resp error:%s\n" % ret
             exit(1)
+    else:
+        exit(1)
 
     # #####upload user's head image#########
-    try:
-        my_url = URL + USERS + "/" + user_id + "/upload_head"
-        payload = dict()
-        payload['token'] = new_token
-        # upload file
-        file1 = '/home/jincm/zuohaoshi/server/test/1.png'
-        file2 = '/home/jincm/zuohaoshi/server/test/2.jpg'
-        myfiles = {'file1': open(file1, 'rb')}
-        print "POST:%s?files:%s" % (my_url, myfiles)
-
-        resp = requests.post(my_url, params=payload, files=myfiles)
-    except Exception, e:
-        logger.error("POST ERROR:%s?error:%s\n", my_url, e)
-        exit(1)
-    else:
-        print 'resp:%s\n' % resp.text
-        if resp.status_code == 200:
-            logger.info("POST OK:%s?%s,resp:%s\n", my_url, payload, resp.json())
-            check_key = resp.json().get('modifyok')
-            if check_key is None:
-                logger.error("POST ERROR:%s?head:%s,resp:%s\n", my_url, payload, resp.json())
-                exit(1)
-        else:
-            logger.error("POST STATUS ERROR:%s?%s,status:%d, resp:%s\n",
-                         my_url, payload, resp.status_code, resp.json())
+    my_url = URL + USERS + "/" + user_id + "/upload_head"
+    params = dict()
+    params['token'] = new_token
+    # upload file
+    file1 = '/home/jincm/zuohaoshi/server/test/1.png'
+    file2 = '/home/jincm/zuohaoshi/server/test/2.jpg'
+    myfiles = {'file1': open(file1, 'rb')}
+    ret = myrequest(my_url, "POST", params=params, files=myfiles)
+    if ret:
+        check_key = ret.get('modifyok')
+        if check_key is None:
+            print "POST ERROR:%s?head:%s,resp:%s\n" % (my_url, params, ret)
             exit(1)
+    else:
+        exit(1)
+    """
 
-    # get user's posts
+    # search users by conditions: loc=x,y&age=19&sex=man&fields=age,name,head_img&offset=10&limit=5
+    # #####show user#########
+    my_url = URL + USERS + "/users/search"
+    params = dict()
+    # params['token'] = new_token
+    params['loc_x'] = 11
+    params['loc_y'] = 12
+    params['_id'] = -1  # order by time also
+    params['fields'] = "id,content"
+    params['offset'] = 1
+    params['limit'] = 7
 
-    # search one post filter by conditions
+    ret = myrequest(my_url, "GET", params=params)
+    if ret:
+        check_key = ret.get('users')
+        if check_key is None:
+            print "GET ERROR:%s?params:%s,resp:%s\n" % (my_url, params, ret)
+            exit(1)
+    else:
+        exit(1)
 
     print "###############################################"
-    print "#######exit#############"
+    print "#######exit OK#############"
     print "###############################################"
 
 

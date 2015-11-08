@@ -171,17 +171,27 @@ def get_sb_activities(user_id, post_type):
 
 
 @activity_blueprint.route("/<post_type>/search", methods=['POST'])
-@login_required
 def search_activity(post_type):
     app.logger.info("request:[%s],[%s],[%s]\n" % (request.headers, request.args, request.json))
-    app.logger.info("type:[%s],current_user:%s\n" % (post_type, current_user.user_id))
-    search = request.json.get("search")
-    if search is None:
-        app.logger.error("missing parameters track:%s" % search)
-        abort(400)
+    app.logger.info("type:[%s]\n" % post_type)
+    limit = 20
+    offset = 0
+    fields = None
+    args = dict()
+    for one in request.args:
+        if one == "limit":
+            limit = int(request.args.get("limit"))
+        elif one == "offset":
+            offset = int(request.args.get("offset"))
+        elif one == "fields":
+            fields = request.args.get("fields")
+        else:
+            args['%s' % one] = request.args.get(one)
 
-    activity = Activity(current_user.user_id, post_type)
-    ret = activity.activity_search(search)
+    # search posts by some conditions, example pos/time/read_nums/
+    activity = Activity(post_type=post_type)
+    ret = activity.activity_search(args, fields, offset, limit)
+
     app.logger.info("search_activity:%s" % ret)
     return jsonify(ret)
 

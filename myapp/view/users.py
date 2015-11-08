@@ -203,22 +203,29 @@ def show_user(user_id):
     return ret_json
 
 
-@users_blueprint.route('/nearby_users', methods=["POST"])
-@login_required
-def nearby_users():
+@users_blueprint.route('/users/search', methods=["GET"])
+def search_users():
     app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
-    app.logger.info("current_user :%s" % current_user.user_id)
 
-    if request.json is None or 'loc' not in request.json:
-        app.logger.error("missing something:loc key is lost")
-        abort(400)
+    limit = 20
+    offset = 0
+    fields = None
+    args = dict()
+    for one in request.args:
+        if one == "limit":
+            limit = int(request.args.get("limit"))
+        elif one == "offset":
+            offset = int(request.args.get("offset"))
+        elif one == "fields":
+            fields = request.args.get("fields")
+        else:
+            args['%s' % one] = request.args.get(one)
 
-    user = User(current_user.user_id)
-    # search nearby users by some conditions, example age/sex/pos
-    ret = user.person_nearby(request.json)
+    # search nearby users by some conditions, example pos/sex/jobs/interest/age:18-20
+    ret = User().users_search(args, fields, offset, limit)
 
     ret_json = jsonify(ret)
-    app.logger.info("nearby_users %s:[%s]" % (current_user.user_id, ret))
+    app.logger.info("nearby_users :[%s]" % ret)
     return ret_json
 
 
