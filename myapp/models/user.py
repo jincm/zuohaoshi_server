@@ -297,16 +297,16 @@ class User(object):
         app.logger.info("users_search [%s]\n" % result)
         return {'users': result}
 
-    def add_friend_ask(self, friend_id, msg=None):
-        app.logger.info("add_friend_ask:[%s]" % friend_id)
+    def add_friend_ask(self, user1, user2=None, msg=None):
+        app.logger.info("add_friend_ask:[%s]" % user1)
 
         ask_user = self.show_user()
-        self.follow_sb(self.user_id, friend_id)
+        self.follow_sb(self.user_id, user1)
 
         # send ask info to him
         msg_body = {}
         msg_body['target_type'] = "users"
-        msg_body['target'] = [friend_id]
+        msg_body['target'] = [user1]
         msg_body['msg'] = {"type": "txt", "msg": '%s' % msg}
         msg_body['from'] = self.user_id
 
@@ -315,38 +315,38 @@ class User(object):
         app.logger.info("add_friend_ask [%s:%s]" % (self.user_id, msg))
         return {'add_friend_ask_ok': self.user_id}
 
-    def add_friend_confirm(self, friend_id):
-        app.logger.info("add_friend_confirm:[%s]" % friend_id)
+    def add_friend_confirm(self, user1, user2=None, msg=None):
+        app.logger.info("add_friend_confirm:[%s]" % user1)
 
         confirm_user = self.show_user()
 
         # add follow on redis
-        self.follow_sb(self.user_id, friend_id)
+        self.follow_sb(self.user_id, user1)
 
         # add friend on redis
-        self.add_friend(self.user_id, friend_id)
+        self.add_friend(self.user_id, user1)
 
         # add friend on IM platform
-        im_obj.add_friend(self.user_id, friend_id)
+        im_obj.add_friend(self.user_id, user1)
 
         app.logger.info("add_friend_confirm [%s]" % self.user_id)
         return {'add_friend_ok': self.user_id}
 
-    def add_friend(self, from_user, to_user):
+    def add_friend(self, from_user, to_user, msg=None):
         forward_key = '%s:%s' % (FRIENDS_KEY, from_user)
         ret = redis_db.sadd(forward_key, to_user)
 
         app.logger.info("follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
-    def del_friend(self, from_user, to_user):
+    def del_friend(self, from_user, to_user, msg=None):
         forward_key = '%s:%s' % (FRIENDS_KEY, from_user)
         ret = redis_db.srem(forward_key, to_user)
 
         app.logger.info("un_follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
-    def follow_sb(self, from_user, to_user):
+    def follow_sb(self, from_user, to_user, msg=None):
         forward_key = '%s:%s' % (FOLLOWS_KEY, from_user)
         forward = redis_db.sadd(forward_key, to_user)
         reverse_key = '%s:%s' % (FOLLOWERS_KEY, to_user)
@@ -356,7 +356,7 @@ class User(object):
         app.logger.info("follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
-    def un_follow_sb(self, from_user, to_user):
+    def un_follow_sb(self, from_user, to_user, msg=None):
         forward_key = '%s:%s' % (FOLLOWS_KEY, from_user)
         forward = redis_db.srem(forward_key, to_user)
         reverse_key = '%s:%s' % (FOLLOWERS_KEY, to_user)
@@ -365,7 +365,7 @@ class User(object):
         app.logger.info("un_follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
-    def block(self, from_user, to_user):
+    def block_sb(self, from_user, to_user, msg=None):
         forward_key = '%s:%s' % (BLOCKS_KEY, from_user)
         forward = redis_db.sadd(forward_key, to_user)
         reverse_key = '%s:%s' % (BLOCKED_KEY, to_user)
@@ -374,7 +374,7 @@ class User(object):
         app.logger.info("block:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
-    def unblock(self, from_user, to_user):
+    def unblock_sb(self, from_user, to_user, msg=None):
         forward_key = '%s:%s' % (BLOCKS_KEY, from_user)
         forward = redis_db.srem(forward_key, to_user)
         reverse_key = '%s:%s' % (BLOCKED_KEY, to_user)
@@ -383,7 +383,7 @@ class User(object):
         app.logger.info("unblock:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
-    def get_follows(self, user):
+    def get_follows(self, user, user2=None, msg=None):
         follows = redis_db.smembers('%s:%s' % (FOLLOWS_KEY, user))
         blocked = redis_db.smembers('%s:%s' % (BLOCKED_KEY, user))
 
@@ -391,29 +391,21 @@ class User(object):
         app.logger.info("get_follows:[%s],[ret:%s]" % (user, ret))
         return ret
 
-    def get_followers(self, user):
+    def get_followers(self, user, user2=None, msg=None):
         followers = redis_db.smembers('%s:%s' % (FOLLOWERS_KEY, user))
         blocks = redis_db.smembers('%s:%s' % (BLOCKS_KEY, user))
         ret = list(followers.difference(blocks))
         app.logger.info("get_followers:[%s],[ret:%s]" % (user, ret))
         return ret
 
-    def get_blocks(self, user):
+    def get_blocks(self, user, user2=None, msg=None):
         return list(redis_db.smembers('%s:%s' % (BLOCKS_KEY, user)))
 
-    def get_blocked(self, user):
+    def get_blocked(self, user, user2=None, msg=None):
         return list(redis_db.smembers('%s:%s' % (BLOCKED_KEY, user)))
 
-    def get_friends(self, user):
+    def get_friends(self, user, user2=None, msg=None):
         return list(redis_db.smembers('%s:%s' % (FRIENDS_KEY, user)))
-
-    def search_one_person(self):
-        pass
-
-    def get_sb_activities(self):
-        index = 10
-        num = 10
-        return ""  # should use show_user
 
 
 class Loster(object):

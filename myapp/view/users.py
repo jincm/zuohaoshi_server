@@ -230,6 +230,35 @@ def search_users():
 
 
 # user add friends/follow sb/followers/blacklist
+@users_blueprint.route('/relationship', methods=["POST"])
+@login_required
+def users_relationship():
+    app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
+    app.logger.info("current_user :%s" % current_user.user_id)
+
+    if request.args is None or 'cmd' not in request.args:
+        app.logger.error("missing something:friend key is lost")
+        abort(400)
+
+    # cmd :add_friend_ask add_friend_confirm add_friend del_friend follow_sb un_follow_sb block_sb
+    # get_follows get_followers get_blocks get_blocked get_friends
+
+    cmd = request.json.get("cmd")
+    user1 = request.json.get("user1")
+    user2 = request.json.get("user1")
+    msg = request.json.get("msg")
+
+    user = User(current_user.user_id)
+    # ret = user.add_friend_ask(user1, user2)
+
+    func = getattr(user, cmd)
+    ret = func(user1, user2, msg)
+
+    ret_json = jsonify(ret)
+    app.logger.info("cmd:%s;[%s,%s,%s],ret=[%s]\n" % (cmd, user1, user2, msg, ret_json))
+    return ret_json
+
+
 @users_blueprint.route('/add_friend', methods=["POST"])
 @login_required
 def add_friend_ask():

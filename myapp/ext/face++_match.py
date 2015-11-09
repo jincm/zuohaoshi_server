@@ -51,7 +51,7 @@ class FacePPSearch(FaceSearch):
             self.logger.error("err:_train_search[%s][%s][%s:%s]\n", image_url, from_url, self.faceset_name, face_id)
             return {'fail': 'error:_train_search'}
 
-        faceset_list = self._info_get_faceset_list(reversetype)
+        faceset_list = self.info_get_faceset_list(reversetype)
         if faceset_list is None:
             self.logger.error("error:info_get_faceset_list[%s][%s]\n", image_url, from_url)
             return {'fail': 'error:info_get_faceset_list'}
@@ -106,7 +106,52 @@ class FacePPSearch(FaceSearch):
     def _faceset_delete(self, city):
         pass
 
-    def _info_get_faceset_list(self, scope_type):
+    def info_get_face(self, face_id):
+        try:
+            url = self.url + "/info/get_face"
+            payload = dict()
+            payload['api_key'] = facepp_api_key
+            payload['api_secret'] = facepp_api_secret
+            payload['face_id'] = face_id
+            resp = requests.get(url, params=payload)
+        except Exception, e:
+            self.logger.error("res error info:%s,error:%s", resp.text, e)
+            return None
+        finally:
+            if resp.status_code == requests.codes.ok:
+                self.logger.info("info_get_face response:%s\n", resp.json())
+                return resp.json()
+            else:
+                self.logger.error("error is coming...[%d, %s]\n", resp.status_code, resp.text)
+                return None
+
+    def faceset_getinfo(self, faceset_name):
+        try:
+            url = self.url + "/faceset/get_info"
+            payload = dict()
+            payload['api_key'] = facepp_api_key
+            payload['api_secret'] = facepp_api_secret
+            payload['faceset_name'] = faceset_name
+            resp = requests.get(url, params=payload)
+        except Exception, e:
+            self.logger.error("res error info:%s,error:%s", resp.text, e)
+            return None
+        finally:
+            if resp.status_code == requests.codes.ok:
+                self.logger.info("faceset_getinfo response:%s\n", resp.json())
+                result = []
+                fsets = resp.json().get('face')
+                for onefs in fsets:
+                    face_id = onefs.get('face_id')
+                    if face_id:
+                        result.append(face_id)
+                self.logger.info("faceset_getinfo response:%s\n", result)
+                return result
+            else:
+                self.logger.error("error is coming...[%d, %s]\n", resp.status_code, resp.text)
+                return None
+
+    def info_get_faceset_list(self, scope_type):
         try:
             url = self.url + "/info/get_faceset_list"
             payload = dict()
@@ -299,6 +344,7 @@ if __name__ == '__main__':
 
     ali_url = "xinsongkeji.oss-cn-beijing-internal.aliyuncs.com/"
     # "http://xinsongkeji.oss-cn-beijing.aliyuncs.com//10.jpg"
+    """
     num = 18
     for i in xrange(1, num):
         test_url = "zuohaoshi/2015/test/lost/"
@@ -313,3 +359,18 @@ if __name__ == '__main__':
         lost_url = "http://" + ali_url + test_url + str(i) + ".jpg"
         from_url = "suspicious" + str(i)
         face_search_obj.submit_suspicious(lost_url, from_url)
+    """
+    face_search_obj = FacePPSearch(logger, "test", "lost")
+    faceset_list = face_search_obj.info_get_faceset_list('lost')
+    if faceset_list is None:
+        logger.error("error:info_get_faceset_list is none\n")
+        exit(1)
+
+    result = {}
+    for one_faceset in faceset_list:
+        face_ids = face_search_obj.faceset_getinfo(one_faceset['faceset_name'])
+        logger.info("face_ids:%s\n", face_ids)
+        for one_face_id in face_ids:
+            logger.info("one face_id:%s\n", one_face_id)
+            ret = face_search_obj.info_get_face(one_face_id)
+            print ret
