@@ -17,7 +17,7 @@ from myapp.models.user import User
 from myapp.ext.file_oss import oss_upload_file as upload_file_to_store
 from myapp import app
 
-activity_blueprint = Blueprint('activity', __name__, url_prefix='/1/ay')  # activity
+activity_blueprint = Blueprint('activity', __name__, url_prefix='/v1/ay')  # activity
 
 
 @activity_blueprint.route("/<post_type>/post", methods=["POST"])

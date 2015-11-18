@@ -20,7 +20,7 @@ from myapp.models.user import User
 from myapp.ext.file_oss import oss_upload_file as upload_file_to_store
 from myapp import app
 
-users_blueprint = Blueprint('users', __name__, url_prefix='/1/u')
+users_blueprint = Blueprint('users', __name__, url_prefix='/v1/u')
 # loster_blueprint = Blueprint('loster', __name__)
 # message_blueprint = Blueprint('message', __name__)
 

@@ -12,7 +12,7 @@ from myapp.models.user import User
 from myapp.models.group import Group
 from myapp import app
 
-message_blueprint = Blueprint('message', __name__, url_prefix='/1/mg')
+message_blueprint = Blueprint('message', __name__, url_prefix='/v1/mg')
 
 
 @message_blueprint.route('/sd', methods=['POST'])

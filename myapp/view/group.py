@@ -11,7 +11,7 @@ from myapp.models.user import User
 from myapp.models.group import Group
 from myapp import app
 
-group_blueprint = Blueprint('group', __name__, url_prefix='/1/g')
+group_blueprint = Blueprint('group', __name__, url_prefix='/v1/g')
 
 @group_blueprint.route('/create', methods=['POST'])
 @login_required
