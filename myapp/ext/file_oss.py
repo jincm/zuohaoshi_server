@@ -14,8 +14,8 @@ accessKeyId, accessKeySecret = ACCESS_ID, SECRET_ACCESS_KEY
 
 endpoint = "oss-cn-beijing.aliyuncs.com"
 BUCKET = "xinsongkeji"
-private_endpoint = BUCKET + ".oss-cn-beijing-internal.aliyuncs.com"
-public_endpoint = BUCKET + ".oss-cn-beijing.aliyuncs.com"
+private_endpoint = BUCKET + ".oss-cn-beijing-internal.aliyuncs.com/"
+public_endpoint = BUCKET + ".oss-cn-beijing.aliyuncs.com/"
 
 oss = OssAPI(endpoint, accessKeyId, accessKeySecret)
 
