@@ -206,6 +206,9 @@ class User(object):
         app.logger.info("Login start:[%s]" % account)
         # get password hash/object_id from mongodb
         result_find = user_collection.find_one({'account': account})
+        if result_find is None:
+            return {'error': 'login failed'}
+
         db_passwd_hash = result_find['passwd_hash']
         object_id = result_find['_id']
 

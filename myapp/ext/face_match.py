@@ -20,6 +20,9 @@ class FaceSearch(object):
     def submit_suspicious(self, image_url, from_url):
         pass
 
+    def face_match(self, img1, img2):
+        pass
+
 
 class FacePPSearch(FaceSearch):
     def __init__(self, mylogger, type, city):
@@ -326,13 +329,17 @@ class FacePPSearch(FaceSearch):
     def _faceset_remove_face(self, face_id):
         pass
 
+    def face_match(self, img1, img2):
+        self.logger.info("imgs is %s,%s\n", img1,img2)
+        return {"score": 30}
+
 
 ##################################################################################
 #######################Test#######################################################
 ##################################################################################
 if __name__ == '__main__':
     #when test,you must cd /home/jincm/zuohaoshi/server first,also is myapp's parent dir
-    #and then "sudo python myapp/ext/face++_match.py"
+    #and then "sudo python myapp/ext/face_match.py"
     import logging
     import random
 

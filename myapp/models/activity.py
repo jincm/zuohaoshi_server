@@ -15,7 +15,7 @@ from myapp.models.user import User
 from myapp.models.group import Group
 from myapp import app
 from myapp.models import redis_db
-
+from myapp.ext.face_match import FacePPSearch
 activity_db = activity_db_client.zuohaoshi
 
 # These keys are intentionally short, so as to save on memory in redis
@@ -148,9 +148,11 @@ class Activity(object):
         app.logger.info("activity_search [%s]\n" % result)
         return {'posts': result}
 
-
-
-
+    def lost_face_match(self, img1, img2):
+        app.logger.info("lost_face_match:[%s,%s]\n" % (img1, img2))
+        obj = FacePPSearch("lost", "beijing")
+        ret = obj.face_match(img1, img2)
+        return ret
 
     def track_activity(self, track):
         app.logger.info("user:%s post one comment:%s, %s\n" % (self.user_id, self.post_type, self.post_id))

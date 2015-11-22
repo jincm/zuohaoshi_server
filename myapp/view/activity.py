@@ -196,6 +196,20 @@ def search_activity(post_type):
     return jsonify(ret)
 
 
+@activity_blueprint.route("/lost/face_match", methods=['POST'])
+@login_required
+def lost_face_match():
+    app.logger.info("request:[%s],[%s],[%s]\n" % (request.headers, request.args, request.json))
+    img1 = request.json.img1
+    img2 = request.json.img2
+    if img1 is None or img2 is None:
+        app.logger.error("missing parameters img:%s" % request.json)
+        abort(400)
+
+    activity = Activity(current_user.user_id)
+    ret = activity.lost_face_match(img1, img2)
+    app.logger.info("lost_face_match:%s" % ret)
+    return jsonify(ret)
 
 
 @activity_blueprint.route("/<post_type>/<post_id>/track", methods=['POST'])
