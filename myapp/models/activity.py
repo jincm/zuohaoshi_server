@@ -125,7 +125,7 @@ class Activity(object):
         app.logger.info("get_sb_activity of %s;result:[%s]\n", user_id, ret)
         return ret
 
-    def activity_search(self, args, fields, offset, limit):
+    def activity_search(self, args, fields, limit, offset):
         app.logger.info("person_nearby:[%s,%s,%s,%s]\n" % (args, fields, offset, limit))
         result = self.collection.ensureIndex({"loc": "2d", "_id": 1}, {"background": "true"})
         condition = dict()

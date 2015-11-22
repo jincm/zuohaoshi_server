@@ -164,7 +164,7 @@ def get_sb_activities(user_id, post_type):
         offset = 0
 
     activity = Activity(current_user.user_id, post_type)
-    ret = activity.get_sb_activity(user_id, int(offset), int(limit))
+    ret = activity.get_sb_activity(user_id, int(limit), int(offset))
     ret_json = jsonify(ret)
     app.logger.info("get_sb_activities:%s" % ret)
     return ret_json
@@ -190,7 +190,7 @@ def search_activity(post_type):
 
     # search posts by some conditions, example pos/time/read_nums/
     activity = Activity(post_type=post_type)
-    ret = activity.activity_search(args, fields, offset, limit)
+    ret = activity.activity_search(args, fields, limit, offset)
 
     app.logger.info("search_activity:%s" % ret)
     return jsonify(ret)
