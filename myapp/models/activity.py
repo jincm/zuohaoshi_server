@@ -24,7 +24,7 @@ PRAISE_NUM_FIELD = 'PN'
 READ_NUM_FIELD = 'RN'
 
 class Activity(object):
-    def __init__(self, user_id=None, post_type=None, post_id=None):
+    def __init__(self, user_id=None, post_type="lost", post_id=None):
         app.logger.info("Activity instance:user_id:%s,%s,%s" % (user_id, post_type, post_id))
         self.user_id = user_id
         self.post_type = post_type  # group/activity/loster
@@ -150,7 +150,7 @@ class Activity(object):
 
     def lost_face_match(self, img1, img2):
         app.logger.info("lost_face_match:[%s,%s]\n" % (img1, img2))
-        obj = FacePPSearch("lost", "beijing")
+        obj = FacePPSearch(app.logger, "lost", "beijing")
         ret = obj.face_match(img1, img2)
         return ret
 

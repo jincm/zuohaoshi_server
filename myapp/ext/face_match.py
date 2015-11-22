@@ -185,6 +185,7 @@ class FacePPSearch(FaceSearch):
             payload['api_secret'] = facepp_api_secret
             payload['url'] = imgurl
             payload['tag'] = tag
+            payload['async'] = False
             # http://apicn.faceplusplus.com/v2/detection/detect?api_key=58d296e0f2c54f238edfa1556201807b&
             # api_secret=4eAtNRcN0Vnj8rA5dVa0XAdFGK0YdxWL&url=http%3A%2F%2Ffaceplusplus.com%2Fstatic%2Fimg%2Fdemo%2F1.jpg&attribute=glass,pose,gender,age,race,smiling
             resp = requests.get(url, params=payload)
@@ -196,7 +197,24 @@ class FacePPSearch(FaceSearch):
         finally:
             if resp.status_code == requests.codes.ok:
                 self.logger.info("response:%s,[%s]\n", resp.json(), resp.json().get('face_id'))
-                return resp.json().get('face')[0].get('face_id')
+                face = resp.json().get('face')
+                if face is None or len(face) < 1:
+                    sess_id = resp.json().get('session_id')
+                    for loop in xrange(1, 5):
+                        status, sess = self._info_get_session(sess_id)
+                        self.logger.info("sess result:[%s]\n", sess)
+                        if status == "SUCC":
+                            self.logger.info("sess:%s,[%s]\n", sess.get('result'))
+                            face = sess.get('result').get('face')
+                            if face is not None and len(face) > 0:
+                                face_id = sess.result.get('face')[0].get('face_id')
+                                return face_id
+                            else:
+                                return None
+                        else:
+                            time.sleep(3)
+                else:
+                    return resp.json().get('face')[0].get('face_id')
             else:
                 self.logger.error("error is coming...[%d, %s]\n", resp.status_code, resp.text)
                 return None
@@ -219,13 +237,13 @@ class FacePPSearch(FaceSearch):
                 self.logger.info("response:%s\n", resp.json())
                 status = resp.json().get('status')
                 if status == 'SUCC':
-                    return True
+                    return status, resp.json()
                 else:
                     self.logger.error("res error info:status not SUCC\n")
-                    return False
+                    return False, resp.json()
             else:
                 self.logger.error("error is coming...[%d, %s]\n", resp.status_code, resp.text)
-                return False
+                return False, resp.json()
 
     def _train_search(self, faceset_name):
         try:
@@ -252,7 +270,7 @@ class FacePPSearch(FaceSearch):
                 return False
 
         for loop in xrange(1, 5):
-            result = self._info_get_session(sess_id)
+            result, sess = self._info_get_session(sess_id)
             if result:
                 return True
             else:
@@ -299,7 +317,7 @@ class FacePPSearch(FaceSearch):
         finally:
             if resp.status_code == requests.codes.ok:
                 self.logger.info("recognition_compare response:%s\n", resp.json())
-                return resp.json().get('similarity')
+                return resp.json()  # resp.json().get('similarity')
             else:
                 self.logger.error("error is coming...[%d, %s]\n", resp.status_code, resp.text)
                 return None
@@ -330,8 +348,16 @@ class FacePPSearch(FaceSearch):
         pass
 
     def face_match(self, img1, img2):
-        self.logger.info("imgs is %s,%s\n", img1,img2)
-        return {"score": 30}
+        self.logger.info("imgs is %s,%s\n", img1, img2)
+        face_id1 = self._detection_detect(img1, "img1")
+        face_id2 = self._detection_detect(img2, "img2")
+        if face_id1 is None or face_id2 is None:
+            self.logger.error("error:detection_detect[%s][%s]\n", img1, img2)
+            return {'fail': 'error:detection_detect'}
+
+        ret = self._recognition_compare(face_id1, face_id2)
+        self.logger.info("recognition_compare ret  %s\n", ret)
+        return ret
 
 
 ##################################################################################
