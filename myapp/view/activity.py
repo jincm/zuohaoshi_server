@@ -166,11 +166,11 @@ def get_sb_activities(user_id, post_type):
     activity = Activity(current_user.user_id, post_type)
     ret = activity.get_sb_activity(user_id, int(limit), int(offset))
     ret_json = jsonify(ret)
-    app.logger.info("get_sb_activities:%s" % ret)
+    app.logger.info("get_sb_activities:%s\n%s" % (ret, ret_json))
     return ret_json
 
 
-@activity_blueprint.route("/<post_type>/search", methods=['POST'])
+@activity_blueprint.route("/search/<post_type>", methods=['POST'])
 def search_activity(post_type):
     app.logger.info("request:[%s],[%s],[%s]\n" % (request.headers, request.args, request.json))
     app.logger.info("type:[%s]\n" % post_type)
@@ -178,7 +178,7 @@ def search_activity(post_type):
     offset = 0
     fields = None
     args = dict()
-    for one in request.args:
+    for one in request.json:
         if one == "limit":
             limit = int(request.args.get("limit"))
         elif one == "offset":

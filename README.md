@@ -65,9 +65,21 @@ vi /usr/local/lib/python2.7/dist-packages/flask/json.py
 ++from bson import ObjectId
         # added by jincm for jsonify ObjectId
         ++if isinstance(o, ObjectId):
-           ++return str(0)
+           ++return str(o)
         if isinstance(o, datetime):
             return http_date(o)
+
+###deploy chat server
+pushd /usr/local/src
+tar xzf node-v4.2.3-linux-x64.tar.gz
+ln -fs `pwd`/node-v4.2.3-linux-x64/bin/node /usr/sbin/node
+ln -fs `pwd`/node-v4.2.3-linux-x64/bin/npm /usr/sbin/npm
+npm -v && node -v
+pushd /home/jincm/zuohaoshi/server/chat
+npm install --save express
+npm install --save socket.io
+#test code
+git clone https://github.com/plhwin/nodejs-socketio-chat.git
 
 ### Run
 test can use

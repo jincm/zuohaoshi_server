@@ -9,6 +9,7 @@ import uuid
 
 import json
 from bson import ObjectId, json_util
+import pymongo
 
 from myapp.models import activity_db_client
 from myapp.models.user import User
@@ -27,7 +28,7 @@ class Activity(object):
     def __init__(self, user_id=None, post_type="lost", post_id=None):
         app.logger.info("Activity instance:user_id:%s,%s,%s" % (user_id, post_type, post_id))
         self.user_id = user_id
-        self.post_type = post_type  # group/activity/loster
+        self.post_type = post_type  # update/group/activity/loster
         self.post_id = post_id
         self.participant = set()
         self.collection = activity_db.get_collection(post_type)
@@ -127,7 +128,8 @@ class Activity(object):
 
     def activity_search(self, args, fields, limit, offset):
         app.logger.info("person_nearby:[%s,%s,%s,%s]\n" % (args, fields, offset, limit))
-        result = self.collection.ensureIndex({"loc": "2d", "_id": 1}, {"background": "true"})
+        # result = self.collection.ensure_index({"loc": "2d", "_id": 1}, {"background": "true"})
+        result = self.collection.ensure_index([("loc", pymongo.GEO2D), ("_id", 1)]) # ([("loc": "2d"), ("_id": 1)])
         condition = dict()
         loc = args.get('loc')
         if loc is None:

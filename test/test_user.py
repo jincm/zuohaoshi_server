@@ -68,7 +68,7 @@ def myrequest(url, method, headers=None, params=None, payload=None, files=None):
         print "%s ERROR except:%s?header:%s?%s,%s" % (method, url, headers, params, payload)
         return None
 
-# kill -9 `pidof uwsgi` && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
+# kill -9 `pidof uwsgi` && sleep 2 && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
 # python zuohaoshi/server/test/test_user.py 192.168.3.12 80
 ##################################################################################
 #######################Test#######################################################

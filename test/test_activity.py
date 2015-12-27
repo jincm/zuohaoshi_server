@@ -218,22 +218,26 @@ if __name__ == '__main__':
         exit(1)
 
     # search posts by conditions: loc=x,y&age=19&sex=man&fields=age,name,head_img&offset=10&limit=5
-    post_type = "lost"
-    my_url = URL + ACTIVITY + "/" + post_type + "/search"
-    params = dict()
-    # params['token'] = token
-    params['loc'] = "11,22"
-    # params['age'] = 18
-    params['sex'] = "man"
-    params['fields'] = "age,name,head_img"
-    params['offset'] = 2
-    params['limit'] = 8
+    post_type = "update"
+    my_url = URL + ACTIVITY + "/search/" + post_type
+    my_headers = dict()
+    my_headers['content-type'] = 'application/json'
+    my_headers['token'] = token
 
-    ret = myrequest(my_url, "GET", params=params)
+    payload = dict()
+    # payload['token'] = token
+    payload['loc'] = "11,22"
+    # payload['age'] = 18
+    payload['sex'] = "man"
+    payload['fields'] = "age,name,head_img"
+    payload['offset'] = 2
+    payload['limit'] = 8
+
+    ret = myrequest(my_url, "POST", headers=my_headers, payload=payload)
     if ret:
         check_key = ret.get('posts')
         if check_key is None:
-            print "GET ERROR:%s?params:%s,resp:%s\n" % (my_url, params, ret)
+            print "GET ERROR:%s?params:%s,resp:%s\n" % (my_url, payload, ret)
             exit(1)
     else:
         exit(1)
