@@ -1,62 +1,155 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var redis = require("redis");
+
+//var client = redis.createClient(6379,'127.0.0.1',{connect_timeout:3});
+var client = redis.createClient(6379,'127.0.0.1');
+client.on('error',function(error){
+	console.log(error);
+});
+var sub = redis.createClient();
+var pub = redis.createClient();
+sub.subscribe('chat');
+
+console.log("redis connected");
+//get & set example
+/*
+client.set('roban', 'this is an testing val', function(err, response) {
+	if (err) {
+		console.log('Failed to set key of roban, error:' + err);
+		return false;
+	}
+
+	client.get('roban',function(errGet,responseGet){
+		console.log('Val:'+responseGet);
+	});
+
+});*/
 
 app.get('/', function(req, res){
 	res.send('<h1>Welcome Realtime Server</h1>');
 });
 
-//在线用户
 var onlineUsers = {};
-//当前在线人数
 var onlineCount = 0;
-
 
 io.on('connection', function(socket){
 	console.log('a user connected');
 	
-	//监听新用户加入
+	//someone login
 	socket.on('login', function(obj){
-		//将新加入用户的唯一标识当作socket的名称，后面退出的时候会用到
 		socket.name = obj.userid;
 		
-		//检查在线列表，如果不在里面就加入
+		//should set redis
 		if(!onlineUsers.hasOwnProperty(obj.userid)) {
-			onlineUsers[obj.userid] = obj.username;
-			//在线人数+1
+			onlineUsers[socket.name] = socket;
 			onlineCount++;
 		}
-		
-		//向所有客户端广播用户加入
-		io.emit('login', {onlineUsers:onlineUsers, onlineCount:onlineCount, user:obj});
-		console.log(obj.username+'加入了聊天室');
+
+		pub.publish('group', {msg: 'user joined',onlineUsers:onlineUsers, onlineCount:onlineCount, user:obj});
+		//if group,maybe done it
+		//io.emit('login', {onlineUsers:onlineUsers, onlineCount:onlineCount, user:obj});
+		console.log(socket.name + ' add chat ' + onlineUsers[obj.userid] + ' socketid is ' + socket.id);
+
+		//sub.subscribe('to_' + socket.name);
+
+		client.smembers('msg_' + socket.name,function (err, msgs) {
+			console.log("my msgs " + msgs + " msgs_key is " + socket.name);
+			for (var i = 0;i < msgs.length; i++) {
+				console.log("onemsg is " + msgs[i]);
+				msg = JSON.parse(msgs[i]);
+
+				//delete the msg from redis
+				client.srem('msg_' + msg.targetId, msgs[i]);
+
+				//console.log("onemsg is " + msg.senderId);
+				socket.emit('msg_server',msg, function(result) {
+					console.log("user login, msgs to client result is " + result);
+					if(result == 'rcv_ok') {
+						console.log("msg send ok,delete it from redis:" + JSON.stringify(msg));
+					} else {
+						//save the msg to redis
+						client.sadd('msg_' + msg.targetId, JSON.stringify(msg));//msg is not the true msg?
+					}
+				});
+				//io.to(onlineUsers[socket.name]).emit('msg_server', msg, function (result) {
+				//	console.log("msg client result is " + result);
+				//});
+			}
+		});
 	});
 	
-	//监听用户退出
+	//
 	socket.on('disconnect', function(){
-		//将退出的用户从在线列表中删除
+		//should do with redis
 		if(onlineUsers.hasOwnProperty(socket.name)) {
-			//退出用户的信息
+			//
 			var obj = {userid:socket.name, username:onlineUsers[socket.name]};
-			
-			//删除
 			delete onlineUsers[socket.name];
-			//在线人数-1
 			onlineCount--;
-			
-			//向所有客户端广播用户退出
-			io.emit('logout', {onlineUsers:onlineUsers, onlineCount:onlineCount, user:obj});
-			console.log(obj.username+'退出了聊天室');
+
+			pub.publish('group', {msg: 'user logout',onlineUsers:onlineUsers, onlineCount:onlineCount, user:obj});
+			//io.emit('logout', {onlineUsers:onlineUsers, onlineCount:onlineCount, user:obj});
+			console.log(socket.name + ' exit chat');
+			//io.emit('user disconnected');
 		}
 	});
-	
-	//监听用户发布聊天内容
-	socket.on('msg', function(obj){
-		//向所有客户端广播发布的消息
-		io.emit('msg', obj);
-		console.log(JSON.stringify(obj));
-		console.log(obj.username+'说：'+obj.content);
+
+	sub.on('message', function (channel, message) {
+		//console.log("channel is " + channel + " targetid is " + message.targetId + " msg is " + message);
+		msg = JSON.parse(message);
+		console.log("channel is " + channel + " targetid is " + msg.targetId + " msg is " + message);
+
+		//io.sockets.socket(socketid).emit('message', 'for your eyes only');
+		//io.sockets.connected[socketid].emit() 或者 io.to(socketId).emit()
+		if(onlineUsers.hasOwnProperty(msg.targetId)) {
+			if(socket.name == msg.targetId && msg.targetId != msg.senderId ){
+				console.log("server redirect msg is " + JSON.stringify(msg));
+				//console.log("io.sockets.connected is " + io.sockets.connected);
+				//console.log(onlineUsers);
+				//console.log(socket.name);
+				//io.sockets.sockets
+				//var toSocket = _.findWhere(io.sockets.sockets,{id:msg.targetId});
+				//io.sockets.connected[msg.targetId]
+				onlineUsers[msg.targetId].emit('msg_server', msg , function (result) {
+					console.log("msg client result is " + result);
+					if(result == 'rcv_ok'){
+						//save the msg to redis
+						//client.sadd('msg_' + msg.targetId, message);
+					} else {
+						//save the msg to redis
+						console.log("save1 the msg to redis: " + result);
+						client.sadd('msg_' + msg.targetId, message);
+					}
+				});
+			}
+		} else {
+			//save the msg to redis
+			console.log("save2 the msg to redis: ");
+			client.sadd('msg_' + msg.targetId, message);
+		}
 	});
+
+	//sender send one msg to someone
+	socket.on('msg_client', function(msg,fn) {
+		//publish to chat or group
+		pub.publish('chat', JSON.stringify(msg));
+		//io.emit('msg_server', msg);
+		console.log('msg_client is ' + JSON.stringify(msg));
+		console.log(msg.senderId + ' say to ' + msg.targetId + " msg is " + msg.content);
+		fn("send_ok");
+		//confirm to sender msg received
+		//console.info("confirm to sender that msg received");
+		//io.emit('send_ok', obj);
+		//fun("send_ok");
+	});
+
+	//receiver confirm msg is received
+	/*socket.on('rcv_ok', function(obj) {
+		console.debug("receiver confirm msg is received");
+	})*/
+
   
 });
 

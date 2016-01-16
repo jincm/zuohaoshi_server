@@ -1,0 +1,75 @@
+精准单用户推送：
+// sending to individual socketid
+io.sockets.socket(socketid).emit('message', 'for your eyes only');
+就可以向一个特定用户推送消息，但是如何获得这个 socketId ，就是生成一个哈希数组，key为username，值为socket.id，
+这样就可以通过用户名获取对应的id，进而可以向特定client推送消息。
+1.0以后 确实是变了 变成 io.sockets.connected[socketid].emit() 或者 io.to(socketId).emit()
+//send to one
+socket.on('toOne',function(msgObj){
+    /*
+        format:{
+            from:{
+                name:"",
+                img:"",
+                id:""
+            },
+            to:"",  //socketid
+            msg:""
+        }
+    */
+    //var toSocket = _.findWhere(socketList,{id:msgObj.to});
+    var toSocket = _.findWhere(io.sockets.sockets,{id:msgObj.to});
+    console.log(toSocket);
+    toSocket.emit('toOne', msgObj);
+});
+
+socket.io中emit和on的用法【转】：
+socket.emit('message', "this is a test");  // send to current request socket client
+socket.broadcast.emit('message', "this is a test");  // sending to all clients except sender
+socket.broadcast.to('game').emit('message', 'nice game');  // sending to all clients in 'game' room(channel) except sender
+io.sockets.emit('message', "this is a test"); // sending to all clients, include sender
+
+io.sockets.in('game').emit('message', 'cool game'); // sending to all clients in 'game' room(channel), include sender
+io.sockets.socket(socketid).emit('message', 'for your eyes only'); // sending to individual socketid
+
+
+socket.emit('action');
+表示发送了一个action命令，命令是字符串的，在另一端接收时，可以这么写：
+socket.on('action',function(){...});
+
+socket.emit('action',data);
+表示发送了一个action命令，还有data数据，在另一端接收时，可以这么写：
+socket.on('action',function(data){...});
+
+socket.emit(action,arg1,arg2);
+表示发送了一个action命令，还有两个数据，在另一端接收时，可以这么写：
+socket.on('action',function(arg1,arg2){...});
+
+在emit方法中包含回调函数，例如：
+socket.emit('action',data, function(arg1,arg2){...} );
+那么这里面有一个回调函数可以在另一端调用，另一端可以这么写：
+socket.on('action',function(data,fn){   fn('a','b') ;  });
+
+上面的data数据可以有0个或者多个，相应的在另一端改变function中参数的个数即可，function中的参数个数和顺序应该和发送时一致
+上面的fn表示另一个端传递过来的参数，是个函数，写fn('a','b') ;会回调函数执行。一次发送不应该写多个回调，
+否则只有最后一个起效，回调应作为最后一个参数。
+
+room相关：
+//1. 向my room广播一个事件，提交者会被排除在外（即不会收到消息）
+io.sockets.on('connection', function (socket) {
+    //注意：和下面对比，这里是从客户端的角度来提交事件
+    socket.broadcast.to('my room').emit('event_name', data);
+}
+//2. 向another room广播一个事件，在此房间所有客户端都会收到消息
+//注意：和上面对比，这里是从服务器的角度来提交事件
+io.sockets.in('another room').emit('event_name', data);
+//向所有客户端广播
+io.sockets.emit('event_name', data);
+
+
+避免在socket.io实时推送项目中使用同步代码，推送项目应该是以中间件的身份出现的,只传输数据：
+高并发系统参数调整，以Linux为例子 调整文件句柄数
+查看liunx 最大文件句柄数 cat /proc/sys/fs/file-max
+查看进程使用的文件句柄数 ls /proc/pid/fd | wc -l
+查看进程句柄数限制 cat /proc/pid/limits | grep “files”
+修改/etc/sysctl.conf 添加 fs.file-max=1000000
