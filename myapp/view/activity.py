@@ -4,6 +4,7 @@
     Good man is well
 """
 import os
+from  datetime import date
 import time
 
 from bson import ObjectId, json_util
@@ -61,8 +62,8 @@ def post_activity_upload_imgs(post_type, post_id):
 
     img_info = dict()
     img_urls = []
-    for one_file in request.files:
-        post_file = request.files.get(one_file)
+    for one_file in request.files.getlist('file'):
+        post_file = one_file # request.files.get(one_file)
 
         # get file and save it to local tmp
         fname = secure_filename(post_file.filename)
@@ -95,7 +96,64 @@ def post_activity_upload_imgs(post_type, post_id):
         app.logger.info("modify post image %s:[%s]\n" % (post_id, ret))
         return jsonify(ret)
 
+# add for only upload file
+@activity_blueprint.route("/upload_imgs", methods=["POST"])
+@login_required
+def upload_imgs():
+    app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
+    app.logger.info("current_user :%s" % current_user.user_id)
+    app.logger.info("start upload file")
 
+    # upload new head portrait to store and update post's url
+    app.logger.info("files :%s" % request.files)
+    if request.files is None:
+        app.logger.error("missing something:file key is lost")
+        abort(400)
+    if request.files.getlist('file') is None:
+        app.logger.error("missing something:file key is lost")
+        abort(400)
+
+    d = date.today()
+    month = '%d%02d' % (d.year, d.month)
+
+    img_urls = []
+    for one_file in request.files.getlist('file'):
+        post_file = one_file  # request.files.get(one_file)
+
+        # get file and save it to local tmp
+        fname = secure_filename(post_file.filename)
+
+        # ext_name = fname.split('.')[-1]
+        # obj_id = str(ObjectId())
+        # pic_name = '%s.%s' % (obj_id, ext_name)
+        # app.logger.info("fname:%s,pic_name:%s\n" % (fname, pic_name))
+
+        pic_name = fname
+
+        localfile = os.path.join(app.config['UPLOAD_FOLDER'], pic_name)
+        app.logger.info("start upload file to local store:[%s],[%s]" % (pic_name, localfile))
+        post_file.save(localfile)
+
+        # upload file to oss
+        pic_url = 'zuohaoshi/%s/%s' % (current_user.user_id, month)
+
+        file_url = upload_file_to_store(pic_url, pic_name, localfile)
+        if file_url is None:
+            app.logger.error("file upload failed")
+            abort(400)
+
+        app.logger.info("end upload file to store:%s\n" % file_url)
+        # delete local tmp file
+        os.remove(localfile)
+
+        img_urls.append(file_url)
+
+    if img_urls:
+        # update post's info
+        # img_info['img_urls'] = img_urls
+        # ret = Activity.post_activity(current_user.user_id, post_type, img_info, post_id)
+        app.logger.info("upload images %s [%s]\n" % (current_user.user_id, img_urls))
+        return jsonify({'img_urls': img_urls})
 
 @activity_blueprint.route("/<post_type>/<post_id>", methods=['GET'])
 @login_required
