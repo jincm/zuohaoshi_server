@@ -73,10 +73,13 @@ def load_user_from_request(request):
     app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
     if request.args and "token" in request.args:
         token = request.args.get("token")
+        #del request.args["token"]
     elif request.json and "token" in request.json:
         token = request.json.get("token")
+        #del request.json["token"]
     elif request.headers and "token" in request.headers:
         token = request.headers.get("token")
+        #del request.headers["token"]
     else:
         return None
     return User.get_user_from_token(token)

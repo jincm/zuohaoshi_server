@@ -286,7 +286,8 @@ class User(object):
             # del args['loc']
             condition['loc'] = {'$near': loc}
             new_cond = dict(condition, **args)
-            find_result = user_db.user_collection.find(condition).skip(offset).limit(limit)
+            # find_result = user_db.user_collection.find(condition).skip(offset).limit(limit)
+            find_result = user_db.user_collection.find().skip(offset).limit(limit)
 
         # db.runCommand( { geoNear : "user_collection" , near : [50,50], num : 10 , query:{"age" : 233} });
         result = []

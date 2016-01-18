@@ -218,7 +218,7 @@ def search_users():
             offset = int(request.args.get("offset"))
         elif one == "fields":
             fields = request.args.get("fields")
-        else:
+        elif one != "token":
             args['%s' % one] = request.args.get(one)
 
     # search nearby users by some conditions, example pos/sex/jobs/interest/age:18-20
