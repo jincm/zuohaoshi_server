@@ -4,6 +4,9 @@
 ###if use docker,then
 docker run --name=ubuntu_server -p 8000:8000 -it ubuntu_server /bin/bash
 
+#docker 挂载目录
+   -v /etc/:/opt/etc/:ro #read only
+
 vm时间不准确：hwclock -s
 
 ### Run
