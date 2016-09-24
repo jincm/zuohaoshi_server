@@ -30,7 +30,7 @@ while [ $i -lt $num ]; do
 	echo "########################"
 	ACCOUT=`date +%s|cut -b '7-11'`
 	#get identify_code
-	identify_code=`curl -i -X GET $URL/USERS/register?accout=1388913$ACCOUT 2>/dev/null | grep identify_code |awk -F' ' '{print $2}'`
+	identify_code=`curl -i -X GET $URL/USERS/register?account=1388913$ACCOUT 2>/dev/null | grep identify_code |awk -F' ' '{print $2}'`
 	echo "identify_code is "$identify_code
 
 	echo ""
@@ -38,9 +38,9 @@ while [ $i -lt $num ]; do
 	echo "######register##########"
 	echo "########################"
 	#register and get token object_id
-	result=`curl -i -X POST -H "Content-Type: application/json" -d '{"accout":"1388913'$ACCOUT'","identify_code":"'$identify_code'","passwd":"'$identify_code'"}' $URL/USERS/register 2>/dev/null`
+	result=`curl -i -X POST -H "Content-Type: application/json" -d '{"account":"1388913'$ACCOUT'","identify_code":"'$identify_code'","passwd":"'$identify_code'"}' $URL/USERS/register 2>/dev/null`
 	TOKEN=`echo $result | awk -F'"' '{print $12}'` && OBJ_ID=`echo $result | awk -F'"' '{print $4}'`
-	echo "result is "$result && echo "token is "$TOKEN  && echo "object_id is "$OBJ_ID && echo "accout is ""1388913'$ACCOUT'"
+	echo "result is "$result && echo "token is "$TOKEN  && echo "object_id is "$OBJ_ID && echo "account is ""1388913'$ACCOUT'"
 
 	echo ""
 	echo "########################"
@@ -62,7 +62,7 @@ while [ $i -lt $num ]; do
 	echo "########################"
 	#login and get token object_id
 	#fangzhi duoci denglu bug
-	TOKEN=`curl -i -X POST -H "Content-Type: application/json" -d '{"accout":"1388913'$ACCOUT'","passwd":"'$identify_code'"}' $URL/$USERS/login 2>/dev/null | grep 'token' |awk -F':' '{print $2}' |awk -F'"' '{print $2}'`
+	TOKEN=`curl -i -X POST -H "Content-Type: application/json" -d '{"account":"1388913'$ACCOUT'","passwd":"'$identify_code'"}' $URL/$USERS/login 2>/dev/null | grep 'token' |awk -F':' '{print $2}' |awk -F'"' '{print $2}'`
 
 	echo ""
 	echo "########################"

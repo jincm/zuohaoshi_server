@@ -2,27 +2,39 @@
 ####################################################################################
 ####################################################################################
 ###if use docker,then
-docker run --name=ubuntu_server -p 8000:8000 -it ubuntu_server /bin/bash
+docker run --name=ubuntu_server -p 8080:8080 -p 222:22 -it ubuntu_server /bin/bash
+#docker run -d -it -P --name docker_name image_name
 
-#docker 挂载目录
+# docker 挂载目录
    -v /etc/:/opt/etc/:ro #read only
 
-vm时间不准确：hwclock -s
+# docker里启动服务
+放到/etc/rc.local中不好使；
+/etc/init.d/ssh start
+/etc/init.d/supervisor start
+
+# mongodb放到server上，不和redis一台机器
+
+# vm时间不准确：hwclock -s
+
+# client 和nodejs的包最好是压缩后传输，否则连接文件可能link不对：
+http://www.foreverpx.cn/2014/11/29/Linux%E4%B8%ADnpm%E5%87%BA%E7%8E%B0npmlog%E6%89%BE%E4%B8%8D%E5%88%B0%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%B3%95/
 
 ### Run
 # test can use when develop
 $ sudo python manage.py runserver
 
 # for production
-mkdir /data/db
+# mkdir /data/db
 service mongodb start
 service redis-server start
 service nginx start
-kill -9 `pidof uwsgi` && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
+service supervisor start
+# kill -9 `pidof uwsgi` && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
 
 
 ####################################################################################
-####################################################################################
+####################下面是具体的构建开发环境过程，有上面的docker就不需要了##########
 ####################################################################################
 #install pip and virtualenv
 sudo apt-get update 
@@ -76,7 +88,11 @@ sudo apt-get install -y redis-server nginx supervisor mongodb-server
 # sudo apt-get install unzip
 # OSS_Python_API_20150811.zip
 
-
+# mongod server
+start-stop-daemon --background --start --quiet --pidfile /var/run/mongodb/mongodb.pid --make-pidfile --chuid mongodb --exec
+/usr/bin/mongod -- --unixSocketPrefix=/var/run/mongodb --config /etc/mongodb.conf run
+# /etc/init.d/mongodb stop失败的处理，将脚本中的stop改成如下，去掉最后的pidof和exec；redis类似
+start-stop-daemon --stop --quiet --user mongodb
 
 ###deploy
 # Not use nginx for proxy?
