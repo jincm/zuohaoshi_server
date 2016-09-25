@@ -1,17 +1,44 @@
 ####################################################################################
 ####################################################################################
 ####################################################################################
+#普通用户运行docker
+sudo gpasswd -a ${USER} docker
+sudo service docker restart
+sudo chmod a+rw /var/run/docker.sock
+
+# export/import docker image
+docker export dockerid > app_server.tar
+cat app_server.tar | sudo docker import - zuohaoshi/app_server
+或者
+docker import http://example.com/exampleimage.tgz zuohaoshi/app_server
+
 ###if use docker,then
-docker run --name=ubuntu_server -p 8080:8080 -p 222:22 -it ubuntu_server /bin/bash
+docker run --name=app_server -p 8080:8080 -p 222:22 -it zuohaoshi/app_server /bin/bash
+docker start app_server
 #docker run -d -it -P --name docker_name image_name
+
+# for run web server
+# mkdir /data/db
+# 服务器上
+service mongodb start
+# docker里面
+service ssh start
+service redis-server start && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini && service nginx start
+kill -9 `pidof uwsgi` && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
 
 # docker 挂载目录
    -v /etc/:/opt/etc/:ro #read only
+
+
+# cp /home/jincm/zuohaoshi/server/nginx_default /etc/nginx/sites-available/default
+# cp /home/jincm/zuohaoshi/server/supervisor.conf /etc/supervisor/conf.d/supervisor.conf
+# ln -fs ../bower_components bower_components
 
 # docker里启动服务
 放到/etc/rc.local中不好使；
 /etc/init.d/ssh start
 /etc/init.d/supervisor start
+# supervisor在ubuntu14中有问题，监听的进程挂了后重启启动进程失败，端口被supervisor占用！！！
 
 # mongodb放到server上，不和redis一台机器
 
@@ -24,13 +51,7 @@ http://www.foreverpx.cn/2014/11/29/Linux%E4%B8%ADnpm%E5%87%BA%E7%8E%B0npmlog%E6%
 # test can use when develop
 $ sudo python manage.py runserver
 
-# for production
-# mkdir /data/db
-service mongodb start
-service redis-server start
-service nginx start
-service supervisor start
-# kill -9 `pidof uwsgi` && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
+
 
 
 ####################################################################################
@@ -125,9 +146,6 @@ npm install --save express
 npm install --save socket.io
 #test code
 git clone https://github.com/plhwin/nodejs-socketio-chat.git
-
-
-
 
 ### Testing
 #install ab for test
