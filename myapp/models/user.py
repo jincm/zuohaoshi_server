@@ -45,7 +45,7 @@ USERID_KEY = 'U'
 class User(object):
 
     def __init__(self, user_id=None):
-        app.logger.info("user instance %s init" % user_id)
+        app.logger.debug("user instance %s init" % user_id)
         self.user_id = user_id
 
         """
@@ -63,7 +63,7 @@ class User(object):
         return '<User %r>' % (self.user_id)
 
     def is_authenticated(self):
-        app.logger.info("authenticated")
+        app.logger.debug("authenticated")
         return True
 
     def is_active(self):
@@ -81,7 +81,7 @@ class User(object):
             raise NotImplementedError("No `id` attribute - override get_id")
 
     def show_user(self):
-        app.logger.info("show user %s" % self.user_id)
+        app.logger.debug("show user %s" % self.user_id)
         result = user_collection.find_one({'_id': self.user_id})  # ObjectId(self.user_id)})
         if result:
             try:
@@ -89,16 +89,16 @@ class User(object):
             except Exception, e:
                 app.logger.error("del key passwd_hash error:%s", e)
 
-        # app.logger.info("show user %s" % result)
+        # app.logger.debug("show user %s" % result)
         # if result has ObjectId type, then must change type as follow, otherwise will wrong
         # ret = json.dumps(result, default=json_util.default)
-        # app.logger.info("show user %s" % ret)
+        # app.logger.debug("show user %s" % ret)
         # return json.loads(ret)
         return result
 
     @classmethod
     def get_user_from_token(cls, token):
-        app.logger.info("get user from token:%s\n" % token)
+        app.logger.debug("get user from token:%s\n" % token)
         # get account from redis according token
         s = Serializer(app.config['SECRET_KEY'])
         try:
@@ -119,12 +119,12 @@ class User(object):
         infos['last_update'] = mytime
         user.modify_user(infos, update='modify')
 
-        app.logger.info("get user from token:%s %s\n" % (token, user.user_id))
+        app.logger.debug("get user from token:%s %s\n" % (token, user.user_id))
         return user
 
     @classmethod
     def add_user(cls, account=None, passwd=None):
-        app.logger.info("add user start:[%s,%s]" % (account, passwd))
+        app.logger.debug("add user start:[%s,%s]" % (account, passwd))
         # check if account has register
         result_find = user_collection.find_one({'account': account})
         if result_find:
@@ -132,7 +132,7 @@ class User(object):
             user_id = result_find.get('_id')
             s = Serializer(app.config['SECRET_KEY'], expires_in=6000)  # 3600000=41 days
             token = s.dumps({'user_id': '%s' % user_id, 'passwd': db_passwd_hash})
-            app.logger.info("user exsit [account:%s]:[user_id:%s]:[%s]\n" % (account, user_id, token))
+            app.logger.debug("user exsit [account:%s]:[user_id:%s]:[%s]\n" % (account, user_id, token))
             return token, str(user_id)
 
         # generate token
@@ -151,7 +151,7 @@ class User(object):
         # save user to easemob platform
         im_obj.register_user(user_id, user_id)
 
-        app.logger.info("add user [%s]:[%s]:[%s]:%s]" % (account, passwd_hash, token, user_id))
+        app.logger.debug("add user [%s]:[%s]:[%s]:%s]" % (account, passwd_hash, token, user_id))
         return token, str(user_id)
 
     @classmethod
@@ -163,7 +163,7 @@ class User(object):
             if len(account) == 11:  # from app/web/weixin
                 msg = u"[做好事]: %d ,请与10分钟内完成手机号验证操作" % identify_code
                 send_short_message(account, msg)
-            app.logger.info("Get identify_code:%s for user %s" % (str(identify_code), account))
+            app.logger.debug("Get identify_code:%s for user %s" % (str(identify_code), account))
 
             # set it to redis {account:identify_code} and set expire time
             redis_db.set(account, identify_code)
@@ -178,15 +178,15 @@ class User(object):
                 # delete identify_code from redis {account:identify_code}
                 redis_db.delete(account)
 
-                app.logger.info("Identify success for account %s" % account)
+                app.logger.debug("Identify success for account %s" % account)
                 token, user_obj_id = cls.add_user(account, passwd)
                 return {"account": account, "token": token, "user_id": user_obj_id}
             else:
-                app.logger.info("Identify error:%s,code:%s,saved:%s" % (account, identify_code, saved_identify_code))
+                app.logger.debug("Identify error:%s,code:%s,saved:%s" % (account, identify_code, saved_identify_code))
                 return {'error': 'Identify code not match'}
 
     def del_user(self, user_id):
-        app.logger.info("del_user start:[%s]" % (user_id))
+        app.logger.debug("del_user start:[%s]" % (user_id))
 
         # delete head portrait from store
 
@@ -198,12 +198,12 @@ class User(object):
 
         # delete his activities in db
 
-        app.logger.info("del_user [%s:%s]" % (self.user_id, user_id))
+        app.logger.debug("del_user [%s:%s]" % (self.user_id, user_id))
         return {'del': user_id}
 
     @classmethod
     def login(cls, account=None, passwd=None):
-        app.logger.info("Login start:[%s]" % account)
+        app.logger.debug("Login start:[%s]" % account)
         # get password hash/object_id from mongodb
         result_find = user_collection.find_one({'account': account})
         if result_find is None:
@@ -215,7 +215,7 @@ class User(object):
         try:
             ret = pwd_context.verify(passwd, db_passwd_hash)
             if not ret:
-                app.logger.info("Login failed:[%s]" % account)
+                app.logger.debug("Login failed:[%s]" % account)
                 return {'error': 'login failed'}
         except Exception, e:
             app.logger.error("Login failed:[%s]" % account)
@@ -228,18 +228,18 @@ class User(object):
             # save token to redis
             redis_db.set(str(object_id), token)
 
-            app.logger.info("Login success:[%s:%s:%s]" % (account, object_id, token))
+            app.logger.debug("Login success:[%s:%s:%s]" % (account, object_id, token))
             return {"login": account, "token": token, "user_id": str(object_id)}
 
     def logout(self):
-            app.logger.info("Login failed:[%s]" % self.user_id)
+            app.logger.debug("Login failed:[%s]" % self.user_id)
             # clear redis token
             redis_db.delete(self.user_id)
 
             return {'logout': self.user_id}
 
     def modify_user(self, info, update='modify'):
-        app.logger.info("save user's new info to db:[%s]" % info)
+        app.logger.debug("save user's new info to db:[%s]" % info)
         if update == 'modify':
             """
             for one in info:
@@ -264,12 +264,12 @@ class User(object):
             app.logger.error("result is %s" % result)
             return result
 
-        app.logger.info("modify_user [%s:%s]" % (self.user_id, result))
+        app.logger.debug("modify_user [%s:%s]" % (self.user_id, result))
         return {'modifyok': self.user_id}
 
     @classmethod
     def users_search(cls, args, fields, offset, limit):
-        app.logger.info("person_nearby:[%s,%s,%s,%s]\n" % (args, fields, offset, limit))
+        app.logger.debug("person_nearby:[%s,%s,%s,%s]\n" % (args, fields, offset, limit))
         # may be first create index
         result = user_db.user_collection.ensure_index([("loc", pymongo.GEO2D), ("sex", 1)])
 
@@ -279,7 +279,7 @@ class User(object):
         loc = []
         loc.append(loc_x)
         loc.append(loc_y)
-        app.logger.info("loc:[%s]\n" % loc)
+        app.logger.debug("loc:[%s]\n" % loc)
         if loc is None:
             find_result = user_db.user_collection.find(args).skip(offset).limit(limit)
         else:
@@ -293,16 +293,16 @@ class User(object):
         result = []
         # maybe only append some meta data, filter with fields
         for one in find_result:
-            app.logger.info("users find result [%s]\n" % one)
+            app.logger.debug("users find result [%s]\n" % one)
             if 'passwd_hash' in one:
                 del one['passwd_hash']
             result.append(one)
 
-        app.logger.info("users_search [%s]\n" % result)
+        app.logger.debug("users_search [%s]\n" % result)
         return {'users': result}
 
     def add_friend_ask(self, user1, user2=None, msg=None):
-        app.logger.info("add_friend_ask:[%s]" % user1)
+        app.logger.debug("add_friend_ask:[%s]" % user1)
 
         ask_user = self.show_user()
         self.follow_sb(self.user_id, user1)
@@ -316,11 +316,11 @@ class User(object):
 
         im_obj.send_txt_msg(self.user_id, msg_body)
 
-        app.logger.info("add_friend_ask [%s:%s]" % (self.user_id, msg))
+        app.logger.debug("add_friend_ask [%s:%s]" % (self.user_id, msg))
         return {'add_friend_ask_ok': self.user_id}
 
     def add_friend_confirm(self, user1, user2=None, msg=None):
-        app.logger.info("add_friend_confirm:[%s]" % user1)
+        app.logger.debug("add_friend_confirm:[%s]" % user1)
 
         confirm_user = self.show_user()
 
@@ -333,21 +333,21 @@ class User(object):
         # add friend on IM platform
         im_obj.add_friend(self.user_id, user1)
 
-        app.logger.info("add_friend_confirm [%s]" % self.user_id)
+        app.logger.debug("add_friend_confirm [%s]" % self.user_id)
         return {'add_friend_ok': self.user_id}
 
     def add_friend(self, from_user, to_user, msg=None):
         forward_key = '%s:%s' % (FRIENDS_KEY, from_user)
         ret = redis_db.sadd(forward_key, to_user)
 
-        app.logger.info("follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
+        app.logger.debug("follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
     def del_friend(self, from_user, to_user, msg=None):
         forward_key = '%s:%s' % (FRIENDS_KEY, from_user)
         ret = redis_db.srem(forward_key, to_user)
 
-        app.logger.info("un_follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
+        app.logger.debug("un_follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
     def follow_sb(self, from_user, to_user, msg=None):
@@ -357,7 +357,7 @@ class User(object):
         reverse = redis_db.sadd(reverse_key, from_user)
 
         ret = forward and reverse
-        app.logger.info("follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
+        app.logger.debug("follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
     def un_follow_sb(self, from_user, to_user, msg=None):
@@ -366,7 +366,7 @@ class User(object):
         reverse_key = '%s:%s' % (FOLLOWERS_KEY, to_user)
         reverse = redis_db.srem(reverse_key, from_user)
         ret = forward and reverse
-        app.logger.info("un_follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
+        app.logger.debug("un_follow:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
     def block_sb(self, from_user, to_user, msg=None):
@@ -375,7 +375,7 @@ class User(object):
         reverse_key = '%s:%s' % (BLOCKED_KEY, to_user)
         reverse = redis_db.sadd(reverse_key, from_user)
         ret = forward and reverse
-        app.logger.info("block:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
+        app.logger.debug("block:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
     def unblock_sb(self, from_user, to_user, msg=None):
@@ -384,7 +384,7 @@ class User(object):
         reverse_key = '%s:%s' % (BLOCKED_KEY, to_user)
         reverse = redis_db.srem(reverse_key, from_user)
         ret = forward and reverse
-        app.logger.info("unblock:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
+        app.logger.debug("unblock:[%s],[%s],[ret:%s]" % (from_user, to_user, ret))
         return ret
 
     def get_follows(self, user, user2=None, msg=None):
@@ -392,14 +392,14 @@ class User(object):
         blocked = redis_db.smembers('%s:%s' % (BLOCKED_KEY, user))
 
         ret = list(follows.difference(blocked))
-        app.logger.info("get_follows:[%s],[ret:%s]" % (user, ret))
+        app.logger.debug("get_follows:[%s],[ret:%s]" % (user, ret))
         return ret
 
     def get_followers(self, user, user2=None, msg=None):
         followers = redis_db.smembers('%s:%s' % (FOLLOWERS_KEY, user))
         blocks = redis_db.smembers('%s:%s' % (BLOCKS_KEY, user))
         ret = list(followers.difference(blocks))
-        app.logger.info("get_followers:[%s],[ret:%s]" % (user, ret))
+        app.logger.debug("get_followers:[%s],[ret:%s]" % (user, ret))
         return ret
 
     def get_blocks(self, user, user2=None, msg=None):

@@ -15,16 +15,18 @@ docker import http://example.com/exampleimage.tgz zuohaoshi/app_server
 ###if use docker,then
 docker run --name=app_server -p 8080:8080 -p 222:22 -it zuohaoshi/app_server /bin/bash
 docker start app_server
+docker attach app_server(注意：attach时不能exit，须ctrl+p+q)
 #docker run -d -it -P --name docker_name image_name
 
-# for run web server
-# mkdir /data/db
-# 服务器上
-service mongodb start
+# 在服务器上运行mongodb，不和redis一台机器，ubuntu14为base的docker运行mongodb，mongod会挂掉
+# mkdir -p /data/db
+# service mongodb start
 # docker里面
+# 开启ssh服务后，就可以用服务器的ip+222去ssh登陆docker
 service ssh start
 service redis-server start && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini && service nginx start
-kill -9 `pidof uwsgi` && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
+kill -9 `pidof uwsgi` && sleep 1 && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi_config.ini
+#查看settings.py中连接的redis mongodb的ip是否正确，netstat有没有相应的连接
 
 # docker 挂载目录
    -v /etc/:/opt/etc/:ro #read only
@@ -34,13 +36,11 @@ kill -9 `pidof uwsgi` && /usr/local/bin/uwsgi /home/jincm/zuohaoshi/server/uwsgi
 # cp /home/jincm/zuohaoshi/server/supervisor.conf /etc/supervisor/conf.d/supervisor.conf
 # ln -fs ../bower_components bower_components
 
-# docker里启动服务
+# docker里自动启动服务
 放到/etc/rc.local中不好使；
 /etc/init.d/ssh start
 /etc/init.d/supervisor start
 # supervisor在ubuntu14中有问题，监听的进程挂了后重启启动进程失败，端口被supervisor占用！！！
-
-# mongodb放到server上，不和redis一台机器
 
 # vm时间不准确：hwclock -s
 
@@ -51,7 +51,12 @@ http://www.foreverpx.cn/2014/11/29/Linux%E4%B8%ADnpm%E5%87%BA%E7%8E%B0npmlog%E6%
 # test can use when develop
 $ sudo python manage.py runserver
 
-
+# python debug
+cp pycharm-debug.egg from pycharm install directory
+easy_install pycharm-debug.egg
+setup pycharm
+import pydevd
+pydevd.settrace('192.168.3.1', port=12345, stdoutToServer=True, stderrToServer=True)
 
 
 ####################################################################################

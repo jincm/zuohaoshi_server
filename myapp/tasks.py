@@ -6,4 +6,5 @@ celery.conf.update(app.config)
 
 @celery.task(ignore_result=True)
 def resize_uploaded_image(filename, w, h):
-    # ...
+    # print none
+    return None

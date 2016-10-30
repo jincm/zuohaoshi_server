@@ -85,13 +85,13 @@ if __name__ == '__main__':
 
     HOST = '127.0.0.1'
     PORT = '8000'
-    VER = '/v1'
+    VER = '/api/v1'
 
     ADMIN = '/admin'
-    USERS = '/u'
+    USERS = '/user'
     ACTIVITY = '/ay'
     GROUP = '/g'
-    TEST_COUNT = 1
+    TEST_COUNT = 2
 
     if len(sys.argv) > 1:
         HOST = sys.argv[1]

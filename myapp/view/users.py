@@ -20,12 +20,14 @@ from myapp.models.user import User
 from myapp.ext.file_oss import oss_upload_file as upload_file_to_store
 from myapp import app
 
-users_blueprint = Blueprint('users', __name__, url_prefix='/v1/u')
+users_blueprint = Blueprint('users', __name__, url_prefix='/api/v1/user')
 # loster_blueprint = Blueprint('loster', __name__)
 # message_blueprint = Blueprint('message', __name__)
+app.logger.info("Blueprint:[users]")
 
 # account-->username
 # user_id-->objectid
+
 
 ########################
 # ## register ##########
@@ -34,6 +36,9 @@ users_blueprint = Blueprint('users', __name__, url_prefix='/v1/u')
 def register_user():
     app.logger.info("request:[%s],[%s],[%s]" % (request.headers, request.args, request.json))
     # json:post,args:get,header have format
+
+    # import pydevd
+    # pydevd.settrace('192.168.3.1', port=12345, stdoutToServer=True, stderrToServer=True)
 
     # get identify code
     if request.method == 'GET':

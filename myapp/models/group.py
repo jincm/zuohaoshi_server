@@ -16,20 +16,20 @@ group_collection = group_db.group_collecttion
 
 class Group(object):
     def __init__(self, object_id=None, user_id=None):
-        app.logger.info("Group instance:%s,%s" % (object_id, user_id))
+        app.logger.debug("Group instance:%s,%s" % (object_id, user_id))
         self.object_id = object_id
         self.user_id = user_id
 
     def get_one_group(self):
-        app.logger.info("get_activity %s,%s" %(self.object_id, self.user_id))
+        app.logger.debug("get_activity %s,%s" %(self.object_id, self.user_id))
         result = group_collection.find_one({'_id': ObjectId(self.object_id)})
         ret = json.dumps(result, default=json_util.default)
-        app.logger.info("get_activity %s" % ret)
+        app.logger.debug("get_activity %s" % ret)
         return json.loads(ret)
 
     @classmethod
     def post_group(cls, user_id, group):
-        app.logger.info("user:%s post one activity:%s" % (user_id, group))
+        app.logger.debug("user:%s post one activity:%s" % (user_id, group))
         one_group = {'group': group, 'user_id': user_id}
         group_id = group_collection.insert_one(one_group).inserted_id
 

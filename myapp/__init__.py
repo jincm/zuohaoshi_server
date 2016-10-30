@@ -58,6 +58,10 @@ app.register_blueprint(activity_blueprint)
 app.register_blueprint(group_blueprint)
 # app.register_blueprint(loster_blueprint)
 app.register_blueprint(message_blueprint)
+
+# app.logger.info("url is %s" % app.url_map)
+# app.logger.info("functions is %s" % app.view_functions)
+
 app.logger.info("end for register_blueprint")
 
 from myapp.models.user import *
@@ -84,7 +88,7 @@ def load_user_from_request(request):
         return None
     return User.get_user_from_token(token)
 
-app.logger.info("end for flask config and init\n")
+app.logger.debug("end for flask config and init\n")
 
 ########################
 # ## error handlers ####

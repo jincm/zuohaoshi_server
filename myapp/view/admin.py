@@ -11,7 +11,7 @@ from myapp.models.user import User
 from myapp.models.activity import Activity
 from myapp.models.group import Group
 
-admin_blueprint = Blueprint('admin', __name__, url_prefix='/v1/admin')
+admin_blueprint = Blueprint('admin', __name__, url_prefix='/api/v1/admin')
 
 
 ########################
